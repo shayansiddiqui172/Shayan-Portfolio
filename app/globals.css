@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ── Fluid typography vars (matching LT Terminal Mono character ratio) ──
+   font-size = 99vw × letter-ratio ÷ letter-count
+   Space Mono char width ≈ 0.601× height → ratio ≈ 1.664            */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg:        #0a0a0a;
+  --color-fg:        #fff;
+  --color-hi:        #00ffa8;
+  --color-dim:       #404040;
+  --color-border:    #1a1a1a;
+  --font-mono:       'Space Mono', monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Base ── */
+html { scroll-behavior: smooth; background: #0a0a0a; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0a0a0a;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+  overflow-x: hidden;
+  padding-bottom: 56px;
+}
+
+/* ── Fluid type scale ── */
+:root {
+  --lr: 1.664;              /* letter ratio: font-size ÷ char-width   */
+  --vw: 99vw;
+
+  /* body: ~60 chars across → fs ≈ 1.65vw */
+  --fs-body:   calc(var(--vw) * var(--lr) / 60);
+  /* small: ~80 chars → fs ≈ 1.24vw */
+  --fs-small:  calc(var(--vw) * var(--lr) / 80);
+  /* label / meta */
+  --fs-meta:   calc(var(--vw) * var(--lr) / 100);
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar       { width: 3px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #1a1a1a; }
+::-webkit-scrollbar-thumb:hover { background: #00ffa8; }
+
+/* ── Custom Cursor ── */
+.cursor-dot {
+  position: fixed;
+  width: 5px; height: 5px;
+  background: #00ffa8;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+}
+
+/* ── Blink ── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.blink { animation: blink 1s step-end infinite; }
+
+/* ── Scroll reveal ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .55s ease, transform .55s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Section heading ── */
+.section-label {
+  font-size: var(--fs-small);
+  color: #404040;
+  letter-spacing: .06em;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Timeline ── */
+.tl-line { position: absolute; left: 0; top: 6px; bottom: 0; width: 1px; background: #1a1a1a; }
+.tl-dot  { position: absolute; left: -4px; top: 6px; width: 9px; height: 9px; border: 1px solid #00ffa8; background: #000; border-radius: 50%; }
+
+/* ── Hide cursor on touch ── */
+@media (pointer: coarse) {
+  body { cursor: auto; }
+  .cursor-dot, .cursor-ring { display: none; }
 }
