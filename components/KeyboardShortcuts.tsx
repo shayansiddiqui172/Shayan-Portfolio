@@ -160,7 +160,7 @@ export default function KeyboardShortcuts() {
           width: "100%",
           zIndex: 50,
           fontFamily: "var(--font-pixel)",
-          fontSize: "clamp(16px, 1.25vw, 22px)",
+          fontSize: "clamp(20px, 1.6vw, 28px)",
           lineHeight: "1.4",
           color: "#fff",
           display: "grid",
@@ -195,7 +195,7 @@ export default function KeyboardShortcuts() {
             left: "2rem",
             zIndex: 50,
             fontFamily: "var(--font-pixel)",
-            fontSize: "clamp(16px, 1.25vw, 22px)",
+            fontSize: "clamp(20px, 1.6vw, 28px)",
             lineHeight: "1.5",
             color: "#fff",
           }}

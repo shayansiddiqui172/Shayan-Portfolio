@@ -3,55 +3,32 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
-/* ─── ASCII portrait ───────────────────────────────────────────────────────── */
-const ASCII = `
-...,,,,,,+++++++++++++++++++++++++++++++++++++++++++,,,,,...........
-..,,+++++XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX+++++,,..........
-.,+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx+,.........
-.+XXXXXXXXXXXXXppp+++++pXXXXXXXXXXXXXXXXXpp+++++pppXXXXXX+,.......
-pXXXXXXXXXp+,.............+pXXXXXXXXXXXp+,.............+pXXXXp.....
-pXXXXXXXXp+,...............+XXXXXXXXXXXp+...............+pXXXXp.....
-pXXXXXXXX+.................pXXXXXXXXXXXX+................+XXXXp.....
-pXXXXXXXp+.................pXXXXXXXXXXXXp.................+XXXp.....
-pXXXXXXXpp++,...........,++pXXXXXXXXXXXXpp++,...........,++XXXp.....
-pXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXp.....
-=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXp.....
-=XXXXXXXXXXXXXpp+====+ppXXXXXXXXXXXXXXXXpp+====+ppXXXXXXXXXX=......
-=XXXXXXXXXXp=,...........=pXXXXXXXXXXXXXp=,...........=pXXXXX=......
-CXXXXXXXXXp=..............=XXXXXXXXXXXXXXp=..............=XXXp=.....
-CXXXXXXXXXp=..............=XXXXXXXXXXXXXXp=..............=XXXp=.....
-CXXXXXXXXXXp=,...........=pXXXXXXXXXXXXXXXp=,...........=pXXXC=.....
-CCXXXXXXXXXXXpp+======+ppXXXXXXXXXXXXXXXXXXXpp+======+ppXXXCC=.....
-CCCXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXCC=.....
-CCCCXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXpp=.....
-/CCCCCXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXpCCC=.....
-//CCCCCCXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXCCCCC=.....
-///CCCCCCCCCCCCCCXXXXXXXXXXXXXXXXXXXXXXXXXXCCCCCCCCCCCCCCCCCC===.....
-////CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC====....
-`.trim();
 
-const ROLES = ["Role 1", "Role 2", "Role 3"];
+const ROLES = ["software engineer", "full-stack developer", "systems developer"];
+const HELLO = "hello,";
 const NAME = "Shayan Siddiqui";
+const NAME_LINE1 = "Shayan";
+const NAME_LINE2 = "Siddiqui";
 const NOISE_CHARS = ["+", ",", ".", "=", "/", "c", "x"];
 const CANVAS_FONT = "'JetBrains Mono', 'Space Mono', monospace";
 
-/* ─── Dot-matrix bitmap font (5×7, stadium-scoreboard style) ───────────────── */
+/* ─── Dot-matrix bitmap font (5×9, thin dot-matrix style) ─────────────────── */
 const GW = 5;
-const GH = 7;
+const GH = 9;
 const GLYPH_GAP = 1;
-const DOT_FILL = 0.76;
+const DOT_FILL = 0.55;
 
 const GLYPH: Record<string, number[]> = {
-  A: [0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
-  D: [0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110],
-  H: [0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
-  I: [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b11111],
-  N: [0b10001, 0b11001, 0b10101, 0b10011, 0b10001, 0b10001, 0b10001],
-  Q: [0b01110, 0b10001, 0b10001, 0b10001, 0b10101, 0b10010, 0b01101],
-  S: [0b01110, 0b10001, 0b10000, 0b01110, 0b00001, 0b10001, 0b01110],
-  U: [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
-  Y: [0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100],
-  " ": [0, 0, 0, 0, 0, 0, 0],
+  A: [0b01110, 0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001, 0b10001],
+  D: [0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110],
+  H: [0b10001, 0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001, 0b10001],
+  I: [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b11111],
+  N: [0b10001, 0b11001, 0b11001, 0b10101, 0b10101, 0b10011, 0b10011, 0b10001, 0b10001],
+  Q: [0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10101, 0b10010, 0b01110, 0b00001],
+  S: [0b01110, 0b10001, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b10001, 0b01110],
+  U: [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
+  Y: [0b10001, 0b10001, 0b01010, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100],
+  " ": [0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 
 function dotGridCols(text: string): number {
@@ -96,8 +73,8 @@ function renderDotText(
   return totalH;
 }
 
-/* ─── DotMatrixHeading ─────────────────────────────────────────────────────── */
-function DotMatrixHeading({ text }: { text: string }) {
+/* ─── DotMatrixHeading — side-by-side layout (left half / right half) ───── */
+function DotMatrixHeading({ line1, line2 }: { line1: string; line2: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const cvRef   = useRef<HTMLCanvasElement>(null);
 
@@ -110,24 +87,38 @@ function DotMatrixHeading({ text }: { text: string }) {
     const draw = () => {
       const W = wrap.clientWidth;
       if (W === 0) return;
-      const cols = dotGridCols(text.toUpperCase());
-      const step = W / cols;
-      const H    = Math.ceil(GH * step);
+      const halfW  = W / 2;
+      const pad    = Math.round(W * 0.025); // small padding from edges
+
+      // Each word fills its own half
+      const cols1  = dotGridCols(line1.toUpperCase());
+      const cols2  = dotGridCols(line2.toUpperCase());
+      const usable = halfW - pad * 2;
+      const step1  = usable / cols1;
+      const step2  = usable / cols2;
+      const step   = Math.min(step1, step2); // uniform dot size
+
+      const w1 = cols1 * step;
+      const w2 = cols2 * step;
+      const H  = Math.ceil(GH * step);
 
       cv.width  = W;
       cv.height = H;
-      renderDotText(ctx, text, W / 2, H / 2, W);
+
+      // Line 1 left-aligned in left half, line 2 left-aligned in right half
+      renderDotText(ctx, line1, pad + w1 / 2, H / 2, w1, "#ffffff");
+      renderDotText(ctx, line2, halfW + pad + w2 / 2, H / 2, w2, "#ffffff");
     };
 
     draw();
     const ro = new ResizeObserver(draw);
     ro.observe(wrap);
     return () => ro.disconnect();
-  }, [text]);
+  }, [line1, line2]);
 
   return (
     <div ref={wrapRef}>
-      <canvas ref={cvRef} className="block w-full" aria-label={text} role="img" />
+      <canvas ref={cvRef} className="block w-full" aria-label={`${line1} ${line2}`} role="img" />
     </div>
   );
 }
@@ -167,13 +158,20 @@ function AsciiMorph({ onDone }: { onDone: () => void }) {
     const nameRow = Math.floor(rows / 2);
     const nameCol = Math.floor((cols - NAME.length) / 2);
 
-    // Phase 3 endpoints
+    // Phase 3 endpoints — match DotMatrixHeading's side-by-side layout
     const smallNameW  = NAME.length * CHAR_W;
-    const upper       = NAME.toUpperCase();
-    const gridCols    = dotGridCols(upper);
-    const finalStep   = W / gridCols;
+    const halfW       = W / 2;
+    const pad         = Math.round(W * 0.025);
+    const usableHalf  = halfW - pad * 2;
+    const cols1       = dotGridCols(NAME_LINE1.toUpperCase());
+    const cols2       = dotGridCols(NAME_LINE2.toUpperCase());
+    const step1       = usableHalf / cols1;
+    const step2       = usableHalf / cols2;
+    const finalStep   = Math.min(step1, step2);
+    const w1Final     = cols1 * finalStep;
+    const w2Final     = cols2 * finalStep;
     const headingH    = GH * finalStep;
-    const tgtCy       = headingH / 2; // top of viewport, vertically centred in heading
+    const tgtCy       = headingH / 2;
 
     /* ── Grid state ── */
     const grid: string[][] = Array.from({ length: rows }, () =>
@@ -264,18 +262,37 @@ function AsciiMorph({ onDone }: { onDone: () => void }) {
           }
         }
 
-      /* Phase 3 — 2500–4200 ms: grow + slide to top in one motion */
+      /* Phase 3 — 2500–4200 ms: grow + slide to top, split side-by-side */
       } else if (elapsed < ANIM_END) {
         const p = (elapsed - 2500) / (ANIM_END - 2500);
         const ease = 1 - Math.pow(1 - p, 3); // ease-out cubic
 
-        const currentW = smallNameW + (W - smallNameW) * ease;
-        const srcCy    = py(nameRow) - FONT_SIZE * 0.35;
-        const cy       = srcCy + (tgtCy - srcCy) * ease;
-
         const bg = bgGrey(elapsed);
-        const charBright = Math.round(255 * (1 - (bg - 10) / 245));
-        renderDotText(ctx!, NAME, W / 2, cy, currentW, `rgb(${charBright},${charBright},${charBright})`);
+        const charBrt = Math.round(255 * (1 - (bg - 10) / 245));
+        const color   = `rgb(${charBrt},${charBrt},${charBrt})`;
+        const srcCy   = py(nameRow) - FONT_SIZE * 0.35;
+
+        // Target positions: line1 left-aligned in left half, line2 left-aligned in right half
+        const cx1Tgt = pad + w1Final / 2;
+        const cx2Tgt = halfW + pad + w2Final / 2;
+
+        // Both start centered, split apart
+        const currentW1 = smallNameW * (NAME_LINE1.length / NAME.length) + (w1Final - smallNameW * (NAME_LINE1.length / NAME.length)) * ease;
+        const currentW2 = smallNameW * (NAME_LINE2.length / NAME.length) + (w2Final - smallNameW * (NAME_LINE2.length / NAME.length)) * ease;
+
+        const cx1 = W / 2 + (cx1Tgt - W / 2) * ease;
+        const cx2 = W / 2 + (cx2Tgt - W / 2) * ease;
+
+        const cy = srcCy + (tgtCy - srcCy) * ease;
+
+        // Fade: line2 fades in as lines separate
+        const line2Alpha = Math.min(1, ease * 2);
+
+        renderDotText(ctx!, NAME_LINE1, cx1, cy, currentW1, color);
+        if (line2Alpha > 0.01) {
+          const r = charBrt, g = charBrt, b = charBrt;
+          renderDotText(ctx!, NAME_LINE2, cx2, cy, currentW2, `rgba(${r},${g},${b},${line2Alpha.toFixed(2)})`);
+        }
 
       } else {
         onDoneRef.current();
@@ -314,6 +331,8 @@ function AsciiMorph({ onDone }: { onDone: () => void }) {
   );
 }
 
+
+
 /* ─── Hero ─────────────────────────────────────────────────────────────────── */
 export default function Hero() {
   const [animDone, setAnimDone]   = useState(false);
@@ -343,6 +362,24 @@ export default function Hero() {
     }
   }, []);
 
+  /* ── Hello typing ── */
+  const [helloText, setHelloText]     = useState("");
+  const [helloCharIdx, setHelloCharIdx] = useState(0);
+  const [helloTyped, setHelloTyped]   = useState(false);
+
+  useEffect(() => {
+    if (!animDone || helloTyped) return;
+    if (helloCharIdx < HELLO.length) {
+      const t = setTimeout(() => {
+        setHelloText(HELLO.slice(0, helloCharIdx + 1));
+        setHelloCharIdx(i => i + 1);
+      }, 75);
+      return () => clearTimeout(t);
+    } else {
+      setHelloTyped(true);
+    }
+  }, [animDone, helloCharIdx, helloTyped]);
+
   /* ── Typewriter ── */
   const [displayed, setDisplayed] = useState("");
   const [roleIdx, setRoleIdx]     = useState(0);
@@ -350,7 +387,7 @@ export default function Hero() {
   const [deleting, setDeleting]   = useState(false);
 
   useEffect(() => {
-    if (!animDone) return;
+    if (!helloTyped) return;
     const word = ROLES[roleIdx];
     let t: ReturnType<typeof setTimeout>;
     if (!deleting && charIdx < word.length) {
@@ -364,7 +401,7 @@ export default function Hero() {
       setRoleIdx(i => (i + 1) % ROLES.length);
     }
     return () => clearTimeout(t);
-  }, [charIdx, deleting, roleIdx, animDone]);
+  }, [charIdx, deleting, roleIdx, helloTyped]);
 
   const fadeIn = (delay: number): React.CSSProperties => ({
     opacity:    animDone ? 1 : 0,
@@ -387,50 +424,49 @@ export default function Hero() {
         className=""
         style={animDone ? { opacity: 1 } : { opacity: 0, visibility: "hidden" }}
       >
-        <DotMatrixHeading text={NAME} />
+        <DotMatrixHeading line1={NAME_LINE1} line2={NAME_LINE2} />
       </div>
 
       {/* ── Two-column body ── */}
       <div className="flex flex-1">
 
-        {/* Left — ASCII portrait */}
-        <div
-          className="hidden md:flex w-1/2 p-5 items-start overflow-hidden"
-          style={fadeIn(0.35)}
-        >
-          <pre
-            className="text-[#1c1c1c] leading-[1.2] select-none"
-            style={{ fontSize: "clamp(5px, 0.55vw, 9px)" }}
-            aria-hidden="true"
-          >
-            {ASCII}
-          </pre>
-        </div>
+        {/* role + info */}
+        <div className="w-full flex flex-col justify-center items-center px-8 md:px-12 py-10 md:py-14">
 
-        {/* Right — role + info */}
-        <div className="w-full md:w-1/2 flex flex-col justify-between px-8 md:px-12 py-10 md:py-14">
+          <div className="flex flex-col gap-2">
 
-          {/* Typewriter role */}
-          <div className="flex flex-col gap-5" style={fadeIn(0.15)}>
-            <p className="flex items-baseline gap-3 text-[#fff]" style={{ fontSize: "var(--fs-body)" }}>
-              <span className="text-[#00ffa8]">/</span>
-              <span>
+            {/* hello, — types out, stays static */}
+            <div style={fadeIn(0)}>
+              <p style={{ color: "#00ff88", fontSize: "2.25rem", fontWeight: "normal", lineHeight: 1.2, fontFamily: "var(--font-pixel)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                {helloText}
+              </p>
+            </div>
+
+            {/* Typewriter role */}
+            <div style={fadeIn(0.2)}>
+              <p style={{ color: "#00ff88", fontSize: "1.2rem", lineHeight: 1.5, minWidth: "21ch" }}>
                 {displayed}
-                <span className="blink text-[#00ffa8]">▌</span>
-              </span>
-            </p>
-            <p className="flex items-baseline gap-3 text-[#404040]" style={{ fontSize: "var(--fs-body)" }}>
-              <span>&amp;</span>
-              <span>[Role 2]</span>
-            </p>
-          </div>
+                <span className="blink" style={{ color: "#00ff88" }}>▌</span>
+              </p>
+            </div>
 
-          {/* Location + scroll hint */}
-          <div className="flex flex-col gap-4" style={fadeIn(0.45)}>
-            <p className="flex items-baseline gap-3 text-[#404040]" style={{ fontSize: "var(--fs-small)" }}>
-              <span className="text-[#1a1a1a]">/</span>
-              <span>[City]<br />[Country]</span>
-            </p>
+            {/* bio */}
+            <div style={{ ...fadeIn(0.4), marginTop: "0.75rem" }}>
+              <p style={{ color: "#999999", fontSize: "0.85rem" }}>
+                building across the stack. from systems to polished web experiences.
+              </p>
+            </div>
+
+            {/* cs @ wilfrid laurier */}
+            <div style={{ ...fadeIn(0.6), marginTop: "0.5rem" }}>
+              <p style={{ color: "#999999", fontSize: "0.85rem" }}>cs @ wilfrid laurier</p>
+            </div>
+
+            {/* toronto, ontario */}
+            <div style={fadeIn(0.8)}>
+              <p style={{ color: "#999999", fontSize: "0.85rem" }}>toronto, ontario</p>
+            </div>
+
           </div>
 
         </div>
