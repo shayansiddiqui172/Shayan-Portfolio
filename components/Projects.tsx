@@ -63,8 +63,8 @@ function Card({ p }: { p: typeof PROJECTS[number] }) {
 export default function Projects() {
   const ref = useReveal<HTMLElement>();
   return (
-    <section id="projects" ref={ref} className="reveal border-b border-[#1a1a1a] px-8 md:px-16 py-20" aria-label="Projects">
-      <DotMatrixText text="/ projects" dotSize={5} color="#404040" className="mb-10" />
+    <section id="projects" ref={ref} className="reveal px-8 md:px-16 py-20" aria-label="Projects">
+      <DotMatrixText text="projects" dotSize={7} color="#ffffff" className="mb-10" />
       <div className="max-w-xl">
         {PROJECTS.map((p, i) => <Card key={i} p={p} />)}
         <div className="border-t border-[#1a1a1a]" />

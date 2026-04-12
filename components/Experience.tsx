@@ -10,8 +10,8 @@ const ENTRIES = [
 export default function Experience() {
   const ref = useReveal<HTMLElement>();
   return (
-    <section id="experience" ref={ref} className="reveal border-b border-[#1a1a1a] px-8 md:px-16 py-20" aria-label="Experience">
-      <DotMatrixText text="/ experience" dotSize={5} color="#404040" className="mb-10" />
+    <section id="experience" ref={ref} className="reveal px-8 md:px-16 py-20" aria-label="Experience">
+      <DotMatrixText text="experience" dotSize={7} color="#ffffff" className="mb-10" />
       <div className="relative pl-8 flex flex-col gap-12 max-w-xl">
         <div className="tl-line" />
         {ENTRIES.map((e, i) => (

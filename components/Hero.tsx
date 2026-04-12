@@ -8,15 +8,17 @@ import DotMatrixText, { FINE, gridCols, renderSegmented } from "./DotMatrixText"
 const NAME = "SHAYAN SIDDIQUI";
 const ACCENT_COLOR = "#00ff88";
 const BG_DARK = "#0A0A0A";
-const ANIMATION_SPEED = 1.4;
+const ANIMATION_SPEED = 1.15;
 
 const ROLES = ["software engineer", "full-stack developer", "systems developer"];
-const HELLO = "hello,";
-const ASCII_CHARS = ["@", "#", "$", "%", "^", "&", "*", "+", "=", "~", "?", "!", "{", "}", "[", "]", "<", ">"];
+// Sparse, lightweight glyphs — blanks mixed in for a more airy field
+const ASCII_CHARS = [".", ".", ".", "·", "·", "+", ":", "-", "~", "*", " ", " ", " ", " "];
 const CANVAS_FONT = "'JetBrains Mono', 'Space Mono', monospace";
 const SHIMMER_INTERVAL = 90;
 const SHIMMER_RATIO = 0.08;
 const PHASE0_HOLD = 800 / ANIMATION_SPEED;
+// Fade window at the start of Phase 1 so the noise eases into the wave
+const NOISE_EASE_IN_DUR = 450 / ANIMATION_SPEED;
 
 /* ─── Phase 1 timing — vertical wave pillars ──────────────────────────────── */
 const STRETCH_DUR    = 250 / ANIMATION_SPEED;
@@ -89,12 +91,12 @@ function HeroAnimation({
     canvas.style.height = `${H}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    /* ── ASCII noise grid ── */
-    const FONT_SIZE = 11;
+    /* ── ASCII noise grid — smaller + airier ── */
+    const FONT_SIZE = 10;
     const FONT_STR = `${FONT_SIZE}px ${CANVAS_FONT}`;
     ctx.font = FONT_STR;
-    const CHAR_W = ctx.measureText("M").width;
-    const LINE_H = FONT_SIZE * 1.15;
+    const CHAR_W = ctx.measureText("M").width * 1.9;
+    const LINE_H = FONT_SIZE * 1.7;
     const noiseCols = Math.ceil(W / CHAR_W) + 1;
     const noiseRows = Math.ceil(H / LINE_H) + 1;
 
@@ -217,7 +219,10 @@ function HeroAnimation({
       let bgCol = "#FFFFFF";
       let charCol = "#000000";
       let noiseCol = "#000000";
-      let noiseAlpha = 1;
+      // Gently thin noise as the wave begins (merges Phase 0 into Phase 1)
+      let noiseAlpha = p1Elapsed < NOISE_EASE_IN_DUR
+        ? 1 - 0.35 * easeInOut(p1Elapsed / NOISE_EASE_IN_DUR)
+        : 0.65;
 
       const p2Elapsed = p1Elapsed - phase2StartTime;
       if (p2Elapsed > 0) {
@@ -235,10 +240,11 @@ function HeroAnimation({
         // Noise: black → dim green (#00ff88) → fade out
         const colorP = Math.min(1, e * 2);
         noiseCol = `rgb(0,${Math.round(255 * colorP)},${Math.round(136 * colorP)})`;
+        // Continue from the thinned ~0.65 baseline → fade to zero
         if (e < 0.5) {
-          noiseAlpha = 1 - (1 - 0.19) * (e / 0.5);
+          noiseAlpha = 0.65 - (0.65 - 0.15) * (e / 0.5);
         } else {
-          noiseAlpha = 0.19 * (1 - (e - 0.5) / 0.5);
+          noiseAlpha = 0.15 * (1 - (e - 0.5) / 0.5);
         }
       }
 
@@ -367,24 +373,6 @@ export default function Hero() {
     }
   }, []);
 
-  /* ── Hello typing ── */
-  const [helloText, setHelloText]     = useState("");
-  const [helloCharIdx, setHelloCharIdx] = useState(0);
-  const [helloTyped, setHelloTyped]   = useState(false);
-
-  useEffect(() => {
-    if (!animDone || helloTyped) return;
-    if (helloCharIdx < HELLO.length) {
-      const t = setTimeout(() => {
-        setHelloText(HELLO.slice(0, helloCharIdx + 1));
-        setHelloCharIdx(i => i + 1);
-      }, 75);
-      return () => clearTimeout(t);
-    } else {
-      setHelloTyped(true);
-    }
-  }, [animDone, helloCharIdx, helloTyped]);
-
   /* ── Typewriter ── */
   const [displayed, setDisplayed] = useState("");
   const [roleIdx, setRoleIdx]     = useState(0);
@@ -392,7 +380,7 @@ export default function Hero() {
   const [deleting, setDeleting]   = useState(false);
 
   useEffect(() => {
-    if (!helloTyped) return;
+    if (!animDone) return;
     const word = ROLES[roleIdx];
     let t: ReturnType<typeof setTimeout>;
     if (!deleting && charIdx < word.length) {
@@ -406,7 +394,7 @@ export default function Hero() {
       setRoleIdx(i => (i + 1) % ROLES.length);
     }
     return () => clearTimeout(t);
-  }, [charIdx, deleting, roleIdx, helloTyped]);
+  }, [charIdx, deleting, roleIdx, animDone]);
 
   const fadeIn = (delay: number): React.CSSProperties => ({
     opacity:    animDone ? 1 : 0,
@@ -431,44 +419,52 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* ── Two-column body ── */}
+      {/* ── Body ── */}
       <div className="flex flex-1">
 
-        {/* role + info */}
-        <div className="w-full flex flex-col justify-center items-center px-8 md:px-12 py-10 md:py-14">
+        {/* role + info — left-aligned, terminal feel */}
+        <div className="w-full flex flex-col justify-center px-8 md:px-12 py-10 md:py-14" style={{ paddingLeft: "2.5vw" }}>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
 
-            {/* hello, — types out, stays static */}
+            {/* Typewriter role — main heading */}
             <div style={fadeIn(0)}>
-              <p style={{ color: "#00ff88", fontSize: "2.25rem", fontWeight: "normal", lineHeight: 1.2, fontFamily: "var(--font-pixel)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                {helloText}
-              </p>
-            </div>
-
-            {/* Typewriter role */}
-            <div style={fadeIn(0.2)}>
-              <p style={{ color: "#00ff88", fontSize: "1.2rem", lineHeight: 1.5, minWidth: "21ch" }}>
+              <p style={{ color: "#00ff88", fontSize: "1.4rem", lineHeight: 1.5, minWidth: "21ch" }}>
                 {displayed}
                 <span className="blink" style={{ color: "#00ff88" }}>▌</span>
               </p>
             </div>
 
             {/* bio */}
-            <div style={{ ...fadeIn(0.4), marginTop: "0.75rem" }}>
-              <p style={{ color: "#999999", fontSize: "0.85rem" }}>
+            <div style={{ ...fadeIn(0.2), marginTop: "0.25rem" }}>
+              <p style={{ color: "#999999", fontSize: "1.15rem" }}>
                 building across the stack. from systems to polished web experiences.
               </p>
             </div>
 
-            {/* cs @ wilfrid laurier */}
-            <div style={{ ...fadeIn(0.6), marginTop: "0.5rem" }}>
-              <p style={{ color: "#999999", fontSize: "0.85rem" }}>cs @ wilfrid laurier</p>
+            {/* info block */}
+            <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+              <div style={fadeIn(0.4)}>
+                <p style={{ color: "#777777", fontSize: "0.95rem" }}>software eng intern @ wealth capital connections</p>
+              </div>
+              <div style={fadeIn(0.6)}>
+                <p style={{ color: "#777777", fontSize: "0.95rem" }}>cs @ wilfrid laurier university</p>
+              </div>
+              <div style={fadeIn(0.8)}>
+                <p style={{ color: "#777777", fontSize: "0.95rem" }}>toronto, ontario</p>
+              </div>
             </div>
 
-            {/* toronto, ontario */}
-            <div style={fadeIn(0.8)}>
-              <p style={{ color: "#999999", fontSize: "0.85rem" }}>toronto, ontario</p>
+            {/* keyboard nav hint */}
+            <div style={{ ...fadeIn(1.1), marginTop: "1.25rem" }}>
+              <p style={{ color: "#aaaaaa", fontSize: "0.9rem", letterSpacing: "0.06em" }}>
+                use{" "}
+                <span style={{ color: "#00ff88", background: "#0a1f10", border: "1px solid #00ff8840", padding: "0.1em 0.4em" }}>^</span>
+                {" "}commands to navigate{" "}
+                <span style={{ color: "#555" }}>·</span>{" "}
+                <span style={{ color: "#00ff88", background: "#0a1f10", border: "1px solid #00ff8840", padding: "0.1em 0.4em" }}>^?</span>
+                {" "}for help
+              </p>
             </div>
 
           </div>

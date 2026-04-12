@@ -90,11 +90,11 @@ const BOOKS = [
 export default function Hobbies() {
   const ref = useReveal<HTMLElement>();
   return (
-    <section id="hobbies" ref={ref} className="reveal border-b border-[#1a1a1a] px-8 md:px-16 py-20" aria-label="More About Me">
-      <DotMatrixText text="/ more about me" dotSize={5} color="#404040" className="mb-10" />
+    <section id="hobbies" ref={ref} className="reveal px-8 md:px-16 py-20" aria-label="More About Me">
+      <DotMatrixText text="more about me" dotSize={7} color="#ffffff" className="mb-10" />
       <div className="flex flex-col md:flex-row gap-10 md:gap-16">
         <div className="md:w-1/2">
-          <DotMatrixText text="/ currently reading" dotSize={3} color="#404040" className="mb-4" />
+          <DotMatrixText text="currently reading" dotSize={4} color="#ffffff" className="mb-4" />
           <div className="flex flex-col gap-3 max-w-sm">
             {BOOKS.map((b, i) => (
               <div key={i} className="flex items-baseline gap-2">

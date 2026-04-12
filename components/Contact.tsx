@@ -12,7 +12,7 @@ export default function Contact() {
   const ref = useReveal<HTMLElement>();
   return (
     <section id="contact" ref={ref} className="reveal px-8 md:px-16 py-20 pb-32" aria-label="Contact">
-      <DotMatrixText text="/ contact" dotSize={5} color="#404040" className="mb-10" />
+      <DotMatrixText text="contact" dotSize={7} color="#ffffff" className="mb-10" />
       <div className="flex flex-col gap-4 max-w-xs">
         {LINKS.map(l => (
           <div key={l.label} className="flex items-center gap-5">

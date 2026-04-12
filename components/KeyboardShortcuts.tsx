@@ -2,17 +2,17 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 
 const ROW1 = [
-  { key: "^H", label: "HOME",       href: "#hero"       },
-  { key: "^P", label: "PROJECTS",   href: "#projects"   },
-  { key: "^↑", label: "PAGE UP",    href: "#hero"       },
-  { key: "^C", label: "CONTACT",    href: "#contact"    },
+  { key: "^H", label: "HOME",         href: "#hero"       },
+  { key: "^P", label: "PROJECTS",     href: "#projects"   },
+  { key: "^T", label: "TECH",         href: "#stack"      },
+  { key: "^C", label: "CONTACT",      href: "#contact"    },
 ];
 
 const ROW2 = [
-  { key: "^A", label: "ABOUT",      href: "#about"      },
-  { key: "^S", label: "STACK",      href: "#stack"      },
-  { key: "^E", label: "EXPERIENCE", href: "#experience" },
-  { key: "^?", label: "HELP",       href: null          },
+  { key: "^B", label: "BIO",          href: "#about"      },
+  { key: "^E", label: "EXPERIENCE",   href: "#experience" },
+  { key: "^A", label: "ABOUT",        href: "#hobbies"    },
+  { key: "^?", label: "HELP",         href: null          },
 ];
 
 const NOISE = ["+", ",", ".", "=", "/", "c", "x", "X", "p", "#", "%", "&"];
@@ -132,8 +132,8 @@ export default function KeyboardShortcuts() {
         clearTimeout(timer);
         setPendingG(false);
         const map: Record<string, string> = {
-          h: "hero", a: "about", s: "stack",
-          e: "experience", p: "projects", c: "contact",
+          h: "hero", b: "about", e: "experience",
+          p: "projects", t: "stack", a: "hobbies", c: "contact",
         };
         if (map[k]) go(map[k]);
         return;
@@ -201,11 +201,12 @@ export default function KeyboardShortcuts() {
           }}
         >
           {[
-            ["g+h", "HERO"],
-            ["g+a", "ABOUT"],
-            ["g+s", "STACK"],
+            ["g+h", "HOME"],
+            ["g+b", "BIO"],
             ["g+e", "EXPERIENCE"],
             ["g+p", "PROJECTS"],
+            ["g+t", "TECHNOLOGIES"],
+            ["g+a", "ABOUT"],
             ["g+c", "CONTACT"],
             ["?",   "TOGGLE HELP"],
           ].map(([k, action]) => (
