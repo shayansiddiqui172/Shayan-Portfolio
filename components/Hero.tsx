@@ -2,131 +2,74 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import DotMatrixText, { FINE, gridCols, renderSegmented } from "./DotMatrixText";
 
+/* ─── Animation constants ─────────────────────────────────────────────────── */
+const NAME = "SHAYAN SIDDIQUI";
+const ACCENT_COLOR = "#00ff88";
+const BG_DARK = "#0A0A0A";
+const ANIMATION_SPEED = 1.4;
 
 const ROLES = ["software engineer", "full-stack developer", "systems developer"];
 const HELLO = "hello,";
-const NAME = "Shayan Siddiqui";
-const NAME_LINE1 = "Shayan";
-const NAME_LINE2 = "Siddiqui";
-const NOISE_CHARS = ["+", ",", ".", "=", "/", "c", "x"];
+const ASCII_CHARS = ["@", "#", "$", "%", "^", "&", "*", "+", "=", "~", "?", "!", "{", "}", "[", "]", "<", ">"];
 const CANVAS_FONT = "'JetBrains Mono', 'Space Mono', monospace";
+const SHIMMER_INTERVAL = 90;
+const SHIMMER_RATIO = 0.08;
+const PHASE0_HOLD = 800 / ANIMATION_SPEED;
 
-/* ─── Dot-matrix bitmap font (5×9, thin dot-matrix style) ─────────────────── */
-const GW = 5;
-const GH = 9;
-const GLYPH_GAP = 1;
-const DOT_FILL = 0.55;
+/* ─── Phase 1 timing — vertical wave pillars ──────────────────────────────── */
+const STRETCH_DUR    = 250 / ANIMATION_SPEED;
+const WAVE_HOLD_DUR  = 120 / ANIMATION_SPEED;
+const CONTRACT_DUR   = 330 / ANIMATION_SPEED;
+const WAVE_CYCLE     = STRETCH_DUR + WAVE_HOLD_DUR + CONTRACT_DUR; // 700ms
+const LETTER_STAGGER = 170 / ANIMATION_SPEED;
+const SPACE_PAUSE    = 150 / ANIMATION_SPEED;
 
-const GLYPH: Record<string, number[]> = {
-  A: [0b01110, 0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001, 0b10001],
-  D: [0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110],
-  H: [0b10001, 0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001, 0b10001],
-  I: [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b11111],
-  N: [0b10001, 0b11001, 0b11001, 0b10101, 0b10101, 0b10011, 0b10011, 0b10001, 0b10001],
-  Q: [0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10101, 0b10010, 0b01110, 0b00001],
-  S: [0b01110, 0b10001, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b10001, 0b01110],
-  U: [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
-  Y: [0b10001, 0b10001, 0b01010, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100],
-  " ": [0, 0, 0, 0, 0, 0, 0, 0, 0],
-};
+/* ─── Phase 2 + Phase 3 timing ────────────────────────────────────────────── */
+const PHASE2_DUR    = 2500 / ANIMATION_SPEED;
+const PHASE3_DELAY  = 300 / ANIMATION_SPEED;
 
-function dotGridCols(text: string): number {
-  return text.length * (GW + GLYPH_GAP) - GLYPH_GAP;
+function easeInOut(t: number): number {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
 
-function renderDotText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  cx: number,
-  cy: number,
-  totalWidth: number,
-  color = "#fff",
-) {
-  const upper = text.toUpperCase();
-  const cols  = dotGridCols(upper);
-  const step  = totalWidth / cols;
-  const dot   = Math.max(1, Math.round(step * DOT_FILL));
-  const totalH = GH * step;
-  const ox    = cx - totalWidth / 2;
-  const oy    = cy - totalH / 2;
-
-  ctx.fillStyle = color;
-  let col = 0;
-  for (const ch of upper) {
-    const rows = GLYPH[ch];
-    if (!rows) { col += GW + GLYPH_GAP; continue; }
-    for (let r = 0; r < GH; r++) {
-      for (let c = 0; c < GW; c++) {
-        if (rows[r] & (1 << (GW - 1 - c))) {
-          ctx.fillRect(
-            Math.round(ox + (col + c) * step),
-            Math.round(oy + r * step),
-            dot,
-            dot,
-          );
-        }
-      }
+/* ─── Cubic bezier easing ─────────────────────────────────────────────────── */
+function makeCubicBezier(x1: number, y1: number, x2: number, y2: number) {
+  return (t: number): number => {
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 20; i++) {
+      const mid = (lo + hi) / 2;
+      const mt = 1 - mid;
+      const bx = 3 * x1 * mt * mt * mid + 3 * x2 * mt * mid * mid + mid * mid * mid;
+      if (bx < t) lo = mid; else hi = mid;
     }
-    col += GW + GLYPH_GAP;
-  }
-  return totalH;
+    const mid = (lo + hi) / 2;
+    const mt = 1 - mid;
+    return 3 * y1 * mt * mt * mid + 3 * y2 * mt * mid * mid + mid * mid * mid;
+  };
+}
+const stretchEase  = makeCubicBezier(0.16, 1, 0.3, 1);  // ease-out: snap up
+const contractEase = makeCubicBezier(0.65, 0, 0.35, 1); // ease-in-out: smooth fall
+
+/* ─── Hero Animation: Phase 0 → Phase 1 → Phase 2 (color inversion) → Phase 3 (reveal) */
+
+interface LetterSlot {
+  char: string;
+  startTime: number;
+  targetCx: number;
+  targetCy: number;
+  targetH: number;
+  slotted: boolean;
 }
 
-/* ─── DotMatrixHeading — side-by-side layout (left half / right half) ───── */
-function DotMatrixHeading({ line1, line2 }: { line1: string; line2: string }) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const cvRef   = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const wrap = wrapRef.current;
-    const cv   = cvRef.current;
-    if (!wrap || !cv) return;
-    const ctx = cv.getContext("2d")!;
-
-    const draw = () => {
-      const W = wrap.clientWidth;
-      if (W === 0) return;
-      const halfW  = W / 2;
-      const pad    = Math.round(W * 0.025); // small padding from edges
-
-      // Each word fills its own half
-      const cols1  = dotGridCols(line1.toUpperCase());
-      const cols2  = dotGridCols(line2.toUpperCase());
-      const usable = halfW - pad * 2;
-      const step1  = usable / cols1;
-      const step2  = usable / cols2;
-      const step   = Math.min(step1, step2); // uniform dot size
-
-      const w1 = cols1 * step;
-      const w2 = cols2 * step;
-      const H  = Math.ceil(GH * step);
-
-      cv.width  = W;
-      cv.height = H;
-
-      // Line 1 left-aligned in left half, line 2 left-aligned in right half
-      renderDotText(ctx, line1, pad + w1 / 2, H / 2, w1, "#ffffff");
-      renderDotText(ctx, line2, halfW + pad + w2 / 2, H / 2, w2, "#ffffff");
-    };
-
-    draw();
-    const ro = new ResizeObserver(draw);
-    ro.observe(wrap);
-    return () => ro.disconnect();
-  }, [line1, line2]);
-
-  return (
-    <div ref={wrapRef}>
-      <canvas ref={cvRef} className="block w-full" aria-label={`${line1} ${line2}`} role="img" />
-    </div>
-  );
-}
-
-/* ─── AsciiMorph canvas — phases 1–3, single motion ───────────────────────── */
-const ANIM_END = 4200; // ms — Phase 3 ends here
-
-function AsciiMorph({ onDone }: { onDone: () => void }) {
+function HeroAnimation({
+  onDone,
+  headingRef,
+}: {
+  onDone: () => void;
+  headingRef: React.RefObject<HTMLDivElement | null>;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const onDoneRef = useRef(onDone);
   useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
@@ -137,187 +80,248 @@ function AsciiMorph({ onDone }: { onDone: () => void }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const dpr = window.devicePixelRatio || 1;
     const W = window.innerWidth;
     const H = window.innerHeight;
-    canvas.width = W;
-    canvas.height = H;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = `${W}px`;
+    canvas.style.height = `${H}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Set initial bg state so bottom nav starts white
-    document.documentElement.style.setProperty("--anim-bg", "255");
-
-    /* ── Grid sizing ── */
-    const FONT_SIZE = Math.max(10, Math.round(W / 90));
-    const FONT_STR  = `${FONT_SIZE}px ${CANVAS_FONT}`;
+    /* ── ASCII noise grid ── */
+    const FONT_SIZE = 11;
+    const FONT_STR = `${FONT_SIZE}px ${CANVAS_FONT}`;
     ctx.font = FONT_STR;
     const CHAR_W = ctx.measureText("M").width;
-    const LINE_H = FONT_SIZE * 1.4;
+    const LINE_H = FONT_SIZE * 1.15;
+    const noiseCols = Math.ceil(W / CHAR_W) + 1;
+    const noiseRows = Math.ceil(H / LINE_H) + 1;
 
-    const cols = Math.ceil(W / CHAR_W);
-    const rows = Math.ceil(H / LINE_H);
-
-    const nameRow = Math.floor(rows / 2);
-    const nameCol = Math.floor((cols - NAME.length) / 2);
-
-    // Phase 3 endpoints — match DotMatrixHeading's side-by-side layout
-    const smallNameW  = NAME.length * CHAR_W;
-    const halfW       = W / 2;
-    const pad         = Math.round(W * 0.025);
-    const usableHalf  = halfW - pad * 2;
-    const cols1       = dotGridCols(NAME_LINE1.toUpperCase());
-    const cols2       = dotGridCols(NAME_LINE2.toUpperCase());
-    const step1       = usableHalf / cols1;
-    const step2       = usableHalf / cols2;
-    const finalStep   = Math.min(step1, step2);
-    const w1Final     = cols1 * finalStep;
-    const w2Final     = cols2 * finalStep;
-    const headingH    = GH * finalStep;
-    const tgtCy       = headingH / 2;
-
-    /* ── Grid state ── */
-    const grid: string[][] = Array.from({ length: rows }, () =>
-      Array.from({ length: cols }, () => randNoise())
-    );
-
-    function randNoise(): string {
-      return NOISE_CHARS[Math.floor(Math.random() * NOISE_CHARS.length)];
+    function randChar(): string {
+      return ASCII_CHARS[Math.floor(Math.random() * ASCII_CHARS.length)];
     }
-    function isNameCell(r: number, c: number): boolean {
-      return r === nameRow && c >= nameCol && c < nameCol + NAME.length;
-    }
-    function px(col: number) { return col * CHAR_W; }
-    function py(row: number) { return row * LINE_H + FONT_SIZE; }
 
+    const grid: string[] = new Array(noiseRows * noiseCols);
+    for (let i = 0; i < grid.length; i++) grid[i] = randChar();
+
+    /* ── Render a single glyph at given center & height ── */
+    function renderSingleChar(char: string, cx: number, cy: number, h: number, color: string) {
+      if (h <= 0) return;
+      const totalW = h * FINE.gw / FINE.gh;
+      renderSegmented(ctx!, char, cx, cy, totalW, color, FINE, 0.72);
+    }
+
+    /* ── Letter targets (computed once at Phase 1 start) ── */
+    let letters: LetterSlot[] = [];
+    let targetsReady = false;
+    let phase2StartTime = 0;
+
+    function computeTargets() {
+      const el = headingRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const totalGridCols = gridCols(NAME, FINE);
+      const step = rect.width / totalGridCols;
+      const letterH = FINE.gh * step;
+
+      letters = [];
+      let t = 0;
+      let col = 0;
+      let nonSpaceCount = 0;
+      for (let i = 0; i < NAME.length; i++) {
+        const ch = NAME[i];
+        if (ch === " ") {
+          letters.push({
+            char: " ", startTime: -1,
+            targetCx: 0, targetCy: 0, targetH: 0,
+            slotted: true,
+          });
+          t += SPACE_PAUSE;
+          col += FINE.gw + FINE.gap;
+          continue;
+        }
+
+        nonSpaceCount++;
+        if (nonSpaceCount === 7) phase2StartTime = t;
+
+        letters.push({
+          char: ch,
+          startTime: t,
+          targetCx: rect.left + (col + FINE.gw / 2) * step,
+          targetCy: rect.top + letterH / 2,
+          targetH: letterH,
+          slotted: false,
+        });
+
+        t += LETTER_STAGGER;
+        col += FINE.gw + FINE.gap;
+      }
+      targetsReady = true;
+    }
+
+    /* ── Animation state ── */
     let rafId = 0;
+    let lastShimmer = 0;
     let startTs = 0;
+    let skipped = false;
+    let allSlottedAt = -1;
 
-    /** Background grey value (255 → 10) based on elapsed time.
-        Hold white until morph is well underway (1200 ms). */
-    const BG_HOLD = 1200;
-    function bgGrey(elapsed: number): number {
-      if (elapsed < BG_HOLD) return 255;
-      const t = Math.min(1, (elapsed - BG_HOLD) / (ANIM_END - BG_HOLD));
-      return Math.round(255 - 245 * Math.sqrt(t));
+    function drawNoise(bgCol: string, noiseCol: string, noiseAlpha: number) {
+      ctx!.fillStyle = bgCol;
+      ctx!.fillRect(0, 0, W, H);
+      if (noiseAlpha <= 0) return;
+      ctx!.save();
+      ctx!.globalAlpha = noiseAlpha;
+      ctx!.fillStyle = noiseCol;
+      ctx!.font = FONT_STR;
+      for (let r = 0; r < noiseRows; r++) {
+        const y = r * LINE_H + FONT_SIZE;
+        const rowOff = r * noiseCols;
+        for (let c = 0; c < noiseCols; c++) {
+          ctx!.fillText(grid[rowOff + c], c * CHAR_W, y);
+        }
+      }
+      ctx!.restore();
     }
 
-    /** Character colour interpolation: black (#000) on white bg → white/green on dark bg */
-    function charAlpha(elapsed: number, baseAlpha: number): string {
-      const bg = bgGrey(elapsed);
-      // Interpolate character brightness: 0 (black) when bg=255, 255 (white) when bg=10
-      const charBright = Math.round(255 * (1 - (bg - 10) / 245));
-      return `rgba(${charBright},${charBright},${charBright},${baseAlpha.toFixed(2)})`;
+    function shimmer() {
+      const count = Math.ceil(grid.length * SHIMMER_RATIO);
+      for (let i = 0; i < count; i++) {
+        grid[Math.floor(Math.random() * grid.length)] = randChar();
+      }
     }
 
     function frame(ts: number) {
+      if (skipped) return;
       if (!startTs) startTs = ts;
       const elapsed = ts - startTs;
 
-      // ── Background: white → #0a0a0a ──
-      const bg = bgGrey(elapsed);
-      ctx!.fillStyle = `rgb(${bg},${bg},${bg})`;
-      ctx!.fillRect(0, 0, W, H);
-      ctx!.font = FONT_STR;
+      if (ts - lastShimmer >= SHIMMER_INTERVAL) {
+        shimmer();
+        lastShimmer = ts;
+      }
 
-      // Broadcast bg progress so bottom nav can match
-      document.documentElement.style.setProperty("--anim-bg", String(bg));
-
-      /* Phase 1 — 0–500 ms: TV static */
-      if (elapsed < 500) {
-        for (let r = 0; r < rows; r++) {
-          for (let c = 0; c < cols; c++) {
-            if (Math.random() < 0.35) grid[r][c] = randNoise();
-            ctx!.fillStyle = charAlpha(elapsed, 0.2 + Math.random() * 0.65);
-            ctx!.fillText(grid[r][c], px(c), py(r));
-          }
-        }
-
-      /* Phase 2 — 500–2500 ms: morph */
-      } else if (elapsed < 2500) {
-        const p = (elapsed - 500) / 2000;
-
-        for (let r = 0; r < rows; r++) {
-          for (let c = 0; c < cols; c++) {
-            if (isNameCell(r, c)) {
-              const target = NAME[c - nameCol];
-              const snap = p * p;
-              const flickerRate = 0.3 * (1 - snap) + 0.02;
-              if (Math.random() < flickerRate) {
-                grid[r][c] = Math.random() < snap ? target : randNoise();
-              }
-              if (p > 0.85) grid[r][c] = target;
-
-              const alpha = 0.45 + p * 0.55;
-              ctx!.fillStyle = charAlpha(elapsed, alpha);
-              ctx!.fillText(grid[r][c], px(c), py(r));
-            } else {
-              const bgDensity = Math.max(0, 1 - p * 1.4);
-              if (Math.random() < 0.08 * bgDensity) {
-                grid[r][c] = Math.random() < (1 - p * 1.1) ? randNoise() : " ";
-              }
-              if (grid[r][c] !== " " && Math.random() < bgDensity) {
-                const alpha = bgDensity * 0.38;
-                ctx!.fillStyle = charAlpha(elapsed, alpha);
-                ctx!.fillText(grid[r][c], px(c), py(r));
-              }
-            }
-          }
-        }
-
-      /* Phase 3 — 2500–4200 ms: grow + slide to top, split side-by-side */
-      } else if (elapsed < ANIM_END) {
-        const p = (elapsed - 2500) / (ANIM_END - 2500);
-        const ease = 1 - Math.pow(1 - p, 3); // ease-out cubic
-
-        const bg = bgGrey(elapsed);
-        const charBrt = Math.round(255 * (1 - (bg - 10) / 245));
-        const color   = `rgb(${charBrt},${charBrt},${charBrt})`;
-        const srcCy   = py(nameRow) - FONT_SIZE * 0.35;
-
-        // Target positions: line1 left-aligned in left half, line2 left-aligned in right half
-        const cx1Tgt = pad + w1Final / 2;
-        const cx2Tgt = halfW + pad + w2Final / 2;
-
-        // Both start centered, split apart
-        const currentW1 = smallNameW * (NAME_LINE1.length / NAME.length) + (w1Final - smallNameW * (NAME_LINE1.length / NAME.length)) * ease;
-        const currentW2 = smallNameW * (NAME_LINE2.length / NAME.length) + (w2Final - smallNameW * (NAME_LINE2.length / NAME.length)) * ease;
-
-        const cx1 = W / 2 + (cx1Tgt - W / 2) * ease;
-        const cx2 = W / 2 + (cx2Tgt - W / 2) * ease;
-
-        const cy = srcCy + (tgtCy - srcCy) * ease;
-
-        // Fade: line2 fades in as lines separate
-        const line2Alpha = Math.min(1, ease * 2);
-
-        renderDotText(ctx!, NAME_LINE1, cx1, cy, currentW1, color);
-        if (line2Alpha > 0.01) {
-          const r = charBrt, g = charBrt, b = charBrt;
-          renderDotText(ctx!, NAME_LINE2, cx2, cy, currentW2, `rgba(${r},${g},${b},${line2Alpha.toFixed(2)})`);
-        }
-
-      } else {
-        onDoneRef.current();
+      /* ── Phase 0: pure noise hold ── */
+      if (elapsed < PHASE0_HOLD) {
+        drawNoise("#FFFFFF", "#000000", 1);
+        rafId = requestAnimationFrame(frame);
         return;
+      }
+
+      /* ── Phase 1 + Phase 2: domino letters + color inversion ── */
+      if (!targetsReady) computeTargets();
+      const p1Elapsed = elapsed - PHASE0_HOLD;
+
+      /* ── Phase 2 color computation ── */
+      let bgCol = "#FFFFFF";
+      let charCol = "#000000";
+      let noiseCol = "#000000";
+      let noiseAlpha = 1;
+
+      const p2Elapsed = p1Elapsed - phase2StartTime;
+      if (p2Elapsed > 0) {
+        const p2t = Math.min(1, p2Elapsed / PHASE2_DUR);
+        const e = easeInOut(p2t);
+
+        // Background: white → #0A0A0A
+        const bgV = Math.round(255 - 245 * e);
+        bgCol = `rgb(${bgV},${bgV},${bgV})`;
+
+        // Block font squares: black → white
+        const chV = Math.round(255 * e);
+        charCol = `rgb(${chV},${chV},${chV})`;
+
+        // Noise: black → dim green (#00ff88) → fade out
+        const colorP = Math.min(1, e * 2);
+        noiseCol = `rgb(0,${Math.round(255 * colorP)},${Math.round(136 * colorP)})`;
+        if (e < 0.5) {
+          noiseAlpha = 1 - (1 - 0.19) * (e / 0.5);
+        } else {
+          noiseAlpha = 0.19 * (1 - (e - 0.5) / 0.5);
+        }
+      }
+
+      drawNoise(bgCol, noiseCol, noiseAlpha);
+
+      let allDone = true;
+
+      for (const lt of letters) {
+        if (lt.char === " ") continue;
+        const le = p1Elapsed - lt.startTime;
+        if (le < 0) { allDone = false; continue; }
+
+        if (lt.slotted) {
+          renderSingleChar(lt.char, lt.targetCx, lt.targetCy, lt.targetH, charCol);
+          continue;
+        }
+
+        allDone = false;
+
+        // Pillar anchored at letter top — stretches down toward viewport bottom
+        const letterTop  = lt.targetCy - lt.targetH / 2;
+        const maxYScale  = Math.max(1, (H - letterTop) / lt.targetH);
+
+        let yScale: number;
+        if (le < STRETCH_DUR) {
+          /* ── STRETCH: pillar shoots up from heading position ── */
+          yScale = maxYScale * stretchEase(le / STRETCH_DUR);
+
+        } else if (le < STRETCH_DUR + WAVE_HOLD_DUR) {
+          /* ── HOLD at full pillar height ── */
+          yScale = maxYScale;
+
+        } else if (le < WAVE_CYCLE) {
+          /* ── CONTRACT: pillar collapses back to heading size ── */
+          const t = (le - STRETCH_DUR - WAVE_HOLD_DUR) / CONTRACT_DUR;
+          yScale = maxYScale + (1 - maxYScale) * contractEase(t);
+
+        } else {
+          lt.slotted = true;
+          yScale = 1;
+        }
+
+        // Render with Y-axis scale anchored at letterTop
+        ctx!.save();
+        ctx!.translate(0, letterTop);
+        ctx!.scale(1, yScale);
+        ctx!.translate(0, -letterTop);
+        renderSingleChar(lt.char, lt.targetCx, lt.targetCy, lt.targetH, charCol);
+        ctx!.restore();
+      }
+
+      /* ── Phase 3: wait for both color-inversion and post-slot hold ── */
+      if (allDone) {
+        if (allSlottedAt < 0) allSlottedAt = p1Elapsed;
+        const phase2Done   = p1Elapsed - phase2StartTime >= PHASE2_DUR;
+        const slotHoldDone = p1Elapsed - allSlottedAt    >= PHASE3_DELAY;
+        if (phase2Done && slotHoldDone) {
+          onDoneRef.current();
+          return;
+        }
       }
 
       rafId = requestAnimationFrame(frame);
     }
 
-    /* ── Skip on interaction ── */
     function skip() {
+      if (skipped) return;
+      skipped = true;
       cancelAnimationFrame(rafId);
       onDoneRef.current();
     }
     window.addEventListener("keydown", skip, { once: true });
-    window.addEventListener("click",   skip, { once: true });
+    window.addEventListener("click", skip, { once: true });
 
     document.fonts.ready.then(() => {
       rafId = requestAnimationFrame(frame);
     });
 
     return () => {
+      skipped = true;
       cancelAnimationFrame(rafId);
       window.removeEventListener("keydown", skip);
-      window.removeEventListener("click",   skip);
+      window.removeEventListener("click", skip);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -325,7 +329,7 @@ function AsciiMorph({ onDone }: { onDone: () => void }) {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 z-50"
-      style={{ background: "#fff", display: "block" }}
+      style={{ background: "#FFFFFF", display: "block" }}
       aria-hidden="true"
     />
   );
@@ -340,11 +344,11 @@ export default function Hero() {
   const [skipAnim, setSkipAnim]   = useState(false);
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLDivElement>(null);
 
   const onDone = useCallback(() => {
     requestAnimationFrame(() => {
       if (canvasWrapperRef.current) canvasWrapperRef.current.style.visibility = "hidden";
-      document.documentElement.style.removeProperty("--anim-bg");
       flushSync(() => setAnimDone(true));
       setTimeout(() => setCanvasGone(true), 50);
       window.dispatchEvent(new Event("hero-anim-done"));
@@ -352,10 +356,11 @@ export default function Hero() {
   }, []);
 
   useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mobile =
       window.matchMedia("(pointer: coarse)").matches ||
       window.innerWidth < 640;
-    if (mobile) {
+    if (mobile || reducedMotion) {
       setSkipAnim(true);
       setAnimDone(true);
       window.dispatchEvent(new Event("hero-anim-done"));
@@ -405,26 +410,25 @@ export default function Hero() {
 
   const fadeIn = (delay: number): React.CSSProperties => ({
     opacity:    animDone ? 1 : 0,
-    transform:  animDone ? "translateY(0)" : "translateY(10px)",
+    transform:  animDone ? "translateY(0)" : "translateY(20px)",
     transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`,
   });
 
   return (
     <section id="hero" className="min-h-screen flex flex-col" aria-label="Hero">
 
-      {/* ── Canvas overlay (phases 1–3) ── */}
+      {/* ── Canvas overlay (Phase 0 + Phase 1) ── */}
       {!canvasGone && !skipAnim && (
         <div ref={canvasWrapperRef} style={{ position: "fixed", inset: 0, zIndex: 50 }}>
-          <AsciiMorph onDone={onDone} />
+          <HeroAnimation onDone={onDone} headingRef={headingRef} />
         </div>
       )}
 
-      {/* ── Real heading — revealed atomically when canvas hides ── */}
-      <div
-        className=""
-        style={animDone ? { opacity: 1 } : { opacity: 0, visibility: "hidden" }}
-      >
-        <DotMatrixHeading line1={NAME_LINE1} line2={NAME_LINE2} />
+      {/* ── Real heading — tight-fill dot-matrix (segmented LED look) ── */}
+      <div style={{ ...(animDone ? { opacity: 1 } : { opacity: 0, visibility: "hidden" as const }), padding: "1.5vw 2.5vw 0" }}>
+        <div ref={headingRef}>
+          <DotMatrixText text={NAME} color="#ffffff" fill={0.72} segmented fine />
+        </div>
       </div>
 
       {/* ── Two-column body ── */}
