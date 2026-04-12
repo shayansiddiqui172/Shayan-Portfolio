@@ -9,7 +9,7 @@
   --color-hi:        #00ffa8;
   --color-dim:       #404040;
   --color-border:    #1a1a1a;
-  --font-mono:       'Space Mono', monospace;
+  --font-mono:       'Share Tech Mono', monospace;
 }
 
 /* ── Base ── */
@@ -18,7 +18,7 @@ html { scroll-behavior: smooth; background: #0a0a0a; }
 body {
   background: #0a0a0a;
   color: #fff;
-  font-family: 'Space Mono', monospace;
+  font-family: 'Share Tech Mono', monospace;
   -webkit-font-smoothing: antialiased;
   cursor: default;
   overflow-x: hidden;

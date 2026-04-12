@@ -1,5 +1,6 @@
 "use client";
 import { useReveal } from "@/hooks/useReveal";
+import DotMatrixText from "./DotMatrixText";
 
 const ENTRIES = [
   { org: "Company Name",     role: "Role",   period: "Year – Year",    desc: "[Description]" },
@@ -10,7 +11,7 @@ export default function Experience() {
   const ref = useReveal<HTMLElement>();
   return (
     <section id="experience" ref={ref} className="reveal border-b border-[#1a1a1a] px-8 md:px-16 py-20" aria-label="Experience">
-      <p className="section-label">/ experience</p>
+      <DotMatrixText text="/ experience" dotSize={5} color="#404040" className="mb-10" />
       <div className="relative pl-8 flex flex-col gap-12 max-w-xl">
         <div className="tl-line" />
         {ENTRIES.map((e, i) => (

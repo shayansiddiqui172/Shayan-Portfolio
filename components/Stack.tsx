@@ -1,5 +1,6 @@
 "use client";
 import { useReveal } from "@/hooks/useReveal";
+import DotMatrixText from "./DotMatrixText";
 
 const CATEGORIES = [
   { label: "languages",  items: ["Language 1", "Language 2", "Language 3"] },
@@ -12,7 +13,7 @@ export default function Stack() {
   const ref = useReveal<HTMLElement>();
   return (
     <section id="stack" ref={ref} className="reveal border-b border-[#1a1a1a] px-8 md:px-16 py-20" aria-label="Technologies">
-      <p className="section-label">/ technologies</p>
+      <DotMatrixText text="/ technologies" dotSize={5} color="#404040" className="mb-10" />
       <div className="flex flex-col gap-5 max-w-xl">
         {CATEGORIES.map(cat => (
           <div key={cat.label} className="flex gap-6 items-baseline">

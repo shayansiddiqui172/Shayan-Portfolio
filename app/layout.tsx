@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Space_Mono, VT323, JetBrains_Mono } from "next/font/google";
+import { Share_Tech_Mono, VT323, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const spaceMono = Space_Mono({
+const shareTechMono = Share_Tech_Mono({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: "400",
   variable: "--font-mono",
   display: "swap",
 });
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${spaceMono.variable} ${vt323.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${shareTechMono.variable} ${vt323.variable} ${jetbrainsMono.variable}`}>
       <body>{children}</body>
     </html>
   );

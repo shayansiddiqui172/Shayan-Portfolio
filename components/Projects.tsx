@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useReveal } from "@/hooks/useReveal";
+import DotMatrixText from "./DotMatrixText";
 
 const PROJECTS = [
   { name: "Project Name", year: "2024", desc: "[Description]", tech: ["Tech 1", "Tech 2", "Tech 3"] },
@@ -63,7 +64,7 @@ export default function Projects() {
   const ref = useReveal<HTMLElement>();
   return (
     <section id="projects" ref={ref} className="reveal border-b border-[#1a1a1a] px-8 md:px-16 py-20" aria-label="Projects">
-      <p className="section-label">/ projects</p>
+      <DotMatrixText text="/ projects" dotSize={5} color="#404040" className="mb-10" />
       <div className="max-w-xl">
         {PROJECTS.map((p, i) => <Card key={i} p={p} />)}
         <div className="border-t border-[#1a1a1a]" />
