@@ -91,7 +91,7 @@ export default function Hobbies() {
   const ref = useReveal<HTMLElement>();
   return (
     <section id="hobbies" ref={ref} className="reveal px-8 md:px-16 py-20" aria-label="More About Me">
-      <DotMatrixText text="more about me" dotSize={7} color="#ffffff" className="mb-10" />
+      <DotMatrixText text="more about me" dotSize={7} color="#ffffff" className="mb-10" animate />
       <div className="flex flex-col md:flex-row gap-10 md:gap-16">
         <div className="md:w-1/2">
           <DotMatrixText text="currently reading" dotSize={4} color="#ffffff" className="mb-4" />

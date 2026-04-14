@@ -200,6 +200,8 @@ interface Props {
   segmented?: boolean;
   /** Use the fine 7×11 glyph set instead of standard 5×9. */
   fine?: boolean;
+  /** Animate a left-to-right column reveal when scrolled into view. */
+  animate?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -211,11 +213,14 @@ export default function DotMatrixText({
   fill,
   segmented = false,
   fine = false,
+  animate = false,
   className,
   style,
 }: Props) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const cvRef   = useRef<HTMLCanvasElement>(null);
+  const wrapRef     = useRef<HTMLDivElement>(null);
+  const cvRef       = useRef<HTMLCanvasElement>(null);
+  const rafRef      = useRef<number>(0);
+  const progressRef = useRef(animate ? 0 : 1);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -223,40 +228,123 @@ export default function DotMatrixText({
     if (!wrap || !cv) return;
     const ctx = cv.getContext("2d")!;
     const dpr = window.devicePixelRatio || 1;
+    const gs  = fine ? FINE : STANDARD;
 
-    const gs = fine ? FINE : STANDARD;
+    progressRef.current = animate ? 0 : 1;
+    let W = 0, H = 0;
 
-    const draw = () => {
+    const resize = (): boolean => {
       const upper = text.toUpperCase();
       const cols  = gridCols(upper, gs);
-
       let step: number;
       if (dotSize) {
         step = dotSize;
       } else {
         const containerW = wrap.clientWidth;
-        if (containerW === 0) return;
+        if (containerW === 0) return false;
         step = containerW / cols;
       }
-
-      const W = Math.ceil(cols * step);
-      const H = Math.ceil(gs.gh * step);
-
+      W = Math.ceil(cols * step);
+      H = Math.ceil(gs.gh * step);
       cv.width  = Math.round(W * dpr);
       cv.height = Math.round(H * dpr);
       cv.style.width  = `${W}px`;
       cv.style.height = `${H}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return true;
+    };
 
+    const paintFull = () => {
+      if (!W || !H) return;
+      ctx.clearRect(0, 0, W, H);
       const render = segmented ? renderSegmented : renderDots;
       render(ctx, text, W / 2, H / 2, W, color, gs, fill);
     };
 
-    draw();
-    const ro = new ResizeObserver(draw);
+    // Each dot-matrix column is invisible until its random revealT, shows
+    // a brief noise flash, then snaps to correct dots — same rhythm as MorphText.
+    const paintMorph = (progress: number, colRevealTs: Float32Array) => {
+      if (!W || !H) return;
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = color;
+      const upper     = text.toUpperCase();
+      const totalCols = gridCols(upper, gs);
+      const step      = W / totalCols;
+      const dot       = Math.max(1, Math.round(step * (fill ?? DOT_FILL)));
+      const FLICKER   = 0.06;
+      let col = 0;
+      for (const ch of upper) {
+        const rows = gs.glyphs[ch];
+        if (!rows) { col += gs.gw + gs.gap; continue; }
+        for (let c = 0; c < gs.gw; c++) {
+          const gc = col + c;
+          const rt = colRevealTs[gc] ?? 0;
+          for (let r = 0; r < gs.gh; r++) {
+            const isOn = !!(rows[r] & (1 << (gs.gw - 1 - c)));
+            if (progress >= rt) {
+              if (isOn) ctx.fillRect(Math.round(gc * step), Math.round(r * step), dot, dot);
+            } else if (progress >= rt - FLICKER) {
+              // brief noise flash
+              if (Math.random() < 0.3) ctx.fillRect(Math.round(gc * step), Math.round(r * step), dot, dot);
+            }
+            // else: invisible — draw nothing
+          }
+        }
+        col += gs.gw + gs.gap;
+      }
+    };
+
+    if (!resize()) return;
+    if (!animate) paintFull();
+
+    // Store colRevealTs in a ref so ResizeObserver can redraw mid-animation
+    const colRevealTsRef = { current: new Float32Array(0) };
+
+    const ro = new ResizeObserver(() => {
+      if (!resize()) return;
+      if (progressRef.current >= 1 || !animate) {
+        paintFull();
+      } else if (colRevealTsRef.current.length) {
+        paintMorph(progressRef.current, colRevealTsRef.current);
+      }
+    });
     ro.observe(wrap);
-    return () => ro.disconnect();
-  }, [text, color, dotSize, fill, segmented, fine]);
+
+    if (!animate) return () => ro.disconnect();
+
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        obs.disconnect();
+        if (!resize()) return;
+        const upper     = text.toUpperCase();
+        const totalCols = gridCols(upper, gs);
+        colRevealTsRef.current = new Float32Array(totalCols).map(
+          () => 0.04 + Math.random() * 0.88,
+        );
+        const duration = 1800;
+        setTimeout(() => {
+          const start = performance.now();
+          const tick = (now: number) => {
+            const raw = Math.min((now - start) / duration, 1);
+            progressRef.current = raw;
+            if (raw >= 1) paintFull();
+            else paintMorph(raw, colRevealTsRef.current);
+            if (raw < 1) rafRef.current = requestAnimationFrame(tick);
+          };
+          rafRef.current = requestAnimationFrame(tick);
+        }, 350);
+      },
+      { threshold: 0.4 },
+    );
+    obs.observe(wrap);
+
+    return () => {
+      ro.disconnect();
+      obs.disconnect();
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [text, color, dotSize, fill, segmented, fine, animate]);
 
   return (
     <div ref={wrapRef} className={className} style={style}>
