@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Share_Tech_Mono, VT323, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -25,7 +25,30 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Shayan Siddiqui",
-  description: "Personal portfolio",
+  description:
+    "Software engineering student at Wilfrid Laurier University. Building across the full stack — from HTTP servers in Go to production web apps.",
+  keywords: ["software engineer", "full-stack developer", "portfolio", "Next.js", "Go", "React", "TypeScript"],
+  authors: [{ name: "Shayan Siddiqui" }],
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    title: "Shayan Siddiqui",
+    description:
+      "Software engineering student at Wilfrid Laurier University. Building across the full stack — from HTTP servers in Go to production web apps.",
+    siteName: "Shayan Siddiqui",
+  },
+  twitter: {
+    card: "summary",
+    title: "Shayan Siddiqui",
+    description:
+      "Software engineering student at Wilfrid Laurier University. Building across the full stack — from HTTP servers in Go to production web apps.",
+    creator: "@shayansiddiqui172",
+  },
+};
+
+export const viewport: Viewport = {
+  colorScheme: "dark",
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,0 +1,2 @@
+- [Portfolio architecture snapshot](project_architecture.md) — client map, Hero rAF cleanup, image usage, font loading, config state
+- [Hard constraints and working preferences](feedback_hard_constraints.md) — what to never change, commit hygiene, animation invariants
