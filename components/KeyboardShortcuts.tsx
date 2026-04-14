@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const ROW1 = [
   { key: "^H", label: "HOME",         href: "#hero"       },

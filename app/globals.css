@@ -44,16 +44,6 @@ body {
 ::-webkit-scrollbar-thumb { background: #1a1a1a; }
 ::-webkit-scrollbar-thumb:hover { background: #00ffa8; }
 
-/* ── Custom Cursor ── */
-.cursor-dot {
-  position: fixed;
-  width: 5px; height: 5px;
-  background: #00ffa8;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%, -50%);
-}
 
 /* ── Blink ── */
 @keyframes blink {
@@ -88,5 +78,4 @@ body {
 /* ── Hide cursor on touch ── */
 @media (pointer: coarse) {
   body { cursor: auto; }
-  .cursor-dot, .cursor-ring { display: none; }
 }

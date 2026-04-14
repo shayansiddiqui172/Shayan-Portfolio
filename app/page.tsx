@@ -7,13 +7,11 @@ import Projects from "@/components/Projects";
 import Hobbies from "@/components/Hobbies";
 import Contact from "@/components/Contact";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
-import Cursor from "@/components/Cursor";
 
 export default function Home() {
   return (
     <>
       <ScrollReset />
-      <Cursor />
       <main>
         <Hero />
         <About />
