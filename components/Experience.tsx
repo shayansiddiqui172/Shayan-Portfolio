@@ -57,10 +57,10 @@ const SCRAMBLE_CHARS = "#@$%&*+=";
 
 const entryCSS = ENTRIES.map((e, i) => `
   @keyframes crossbar-morph-${i} {
-    0%   { background: ${e.color};     transform: scaleY(1);   }
-    33%  { background: ${e.nearWhite}; transform: scaleY(2);   }
-    65%  { background: ${e.settled};   transform: scaleY(1.3); }
-    100% { background: ${e.settled};   transform: scaleY(1.3); }
+    0%   { background: #ffffff; transform: scaleY(1);   }
+    33%  { background: #ffffff; transform: scaleY(2);   }
+    65%  { background: #cccccc; transform: scaleY(1.3); }
+    100% { background: #cccccc; transform: scaleY(1.3); }
   }
   .experience-entry-${i}:hover .experience-crossbar {
     animation: crossbar-morph-${i} 600ms ease-out 1 forwards;
@@ -78,8 +78,8 @@ const entryCSS = ENTRIES.map((e, i) => `
 
   @keyframes role-glow-${i} {
     0%   { text-shadow: none; }
-    50%  { text-shadow: 0 0 14px ${e.color}cc, 0 0 28px ${e.color}44; }
-    100% { text-shadow: 0 0 8px ${e.color}77; }
+    50%  { text-shadow: 0 0 14px #ffffffcc, 0 0 28px #ffffff44; }
+    100% { text-shadow: 0 0 8px #ffffff77; }
   }
   .experience-entry-${i}:hover .experience-role {
     animation: role-glow-${i} 1s ease-in-out 1 forwards;
@@ -222,7 +222,7 @@ function EntryCard({ e, i, y }: { e: Entry; i: number; y: number }) {
           top: y - 7,
           width: CONN_W * 2,
           height: 14,
-          background: e.color,
+          background: "#ffffff",
           zIndex: 4,
         }}
       />
@@ -255,7 +255,7 @@ function EntryCard({ e, i, y }: { e: Entry; i: number; y: number }) {
           <LogoBox src={e.logo} className="experience-logo" />
           <div style={{ flex: 1, textAlign: "left" }}>
             <div className="experience-role" style={{
-              fontSize: "1.8rem", color: e.color,
+              fontSize: "1.8rem", color: "#ffffff",
               fontFamily: "var(--font-pixel)",
               lineHeight: 1.35, marginBottom: 4,
               whiteSpace: "nowrap",
@@ -396,10 +396,10 @@ export default function Experience() {
             <div key={i} className="relative">
               <div style={{
                 position: "absolute", left: -4, top: 6,
-                width: 8, height: 8, background: e.color,
+                width: 8, height: 8, background: "#ffffff",
               }} />
               <div className="flex flex-col gap-1">
-                <span style={{ fontSize: "1.1rem", color: e.color, fontFamily: "var(--font-mono)" }}>{e.role}</span>
+                <span style={{ fontSize: "1.1rem", color: "#ffffff", fontFamily: "var(--font-mono)" }}>{e.role}</span>
                 <span style={{ fontSize: "0.95rem", color: "#aaaaaa", fontFamily: "var(--font-mono)" }}>{e.org}</span>
                 <span style={{ fontSize: "0.75rem", color: "#555555", fontFamily: "var(--font-mono)" }}>{e.date}</span>
                 <p style={{ fontSize: "0.85rem", color: "#777", fontFamily: "var(--font-pixel)", lineHeight: 1.6, marginTop: 4 }}>{e.bullet}</p>

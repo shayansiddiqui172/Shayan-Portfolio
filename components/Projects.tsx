@@ -15,7 +15,7 @@ const PROJECTS = [
   },
   {
     name: "Tab Organizer",
-    year: "2025",
+    year: "2026",
     subtitle: "FEATURED BY GOOGLE",
     note: "400+ installs",
     desc: "Chrome extension featured by Google on the Chrome Web Store. Custom classification algorithm auto-groups 100+ tabs with 95%+ accuracy. Session persistence and crash recovery via chrome.storage API.",
@@ -24,7 +24,7 @@ const PROJECTS = [
   },
   {
     name: "Content Engine",
-    year: "2025",
+    year: "2026",
     subtitle: "CLIENT PROJECT",
     desc: "End-to-end LinkedIn content intelligence pipeline built for a VC firm. Scrapes engagement data, runs AI analysis via Claude API, and outputs to structured Excel reports and an interactive Vercel dashboard.",
     tech: ["Python", "Claude API", "PhantomBuster", "Apify", "Vercel"],
@@ -33,7 +33,7 @@ const PROJECTS = [
   },
   {
     name: "Private Cloud",
-    year: "2025",
+    year: "2026",
     subtitle: "SYSTEMS PROJECT",
     desc: "Self-hosted private cloud server built from scratch in Go on top of a raw TCP HTTP/1.1 server. Features JWT auth, SQLite-backed virtual folders, file versioning, and a Finder-style web UI. Deployed via Cloudflare Tunnel with no exposed home IP.",
     tech: ["Go", "TCP/IP", "SQLite", "JWT", "Cloudflare", "Linux"],
