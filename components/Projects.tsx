@@ -1,96 +1,349 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useReveal } from "@/hooks/useReveal";
 import DotMatrixText from "./DotMatrixText";
 
 const PROJECTS = [
   {
     name: "CartSniper",
-    year: "HackCanada 2026",
-    desc: "Multimodal grocery recognition system using Gemini Vision AI and barcode scanning to compare prices across 10+ Canadian retailers in under 1 second.",
+    year: "2026",
+    subtitle: "HACKCANADA",
+    desc: "Built at HackCanada 2026 — a multimodal grocery price intelligence app using Gemini Vision AI and barcode scanning to compare prices across 10+ Canadian retailers in real time.",
     tech: ["TypeScript", "React", "Node.js", "Firebase", "Gemini"],
+    url: "github.com/shayansiddiqui172/CartSniper",
+    screenshot: "/projects/cartsniper.png",
   },
   {
-    name: "Tab Organizer Extension",
-    year: "200+ installs",
-    desc: "Chrome extension with custom tab classification algorithm, auto-grouping 100+ tabs with 95%+ accuracy. Session persistence and crash recovery via chrome.storage API.",
+    name: "Tab Organizer",
+    year: "2025",
+    subtitle: "FEATURED BY GOOGLE",
+    note: "400+ installs",
+    desc: "Chrome extension featured by Google on the Chrome Web Store. Custom classification algorithm auto-groups 100+ tabs with 95%+ accuracy. Session persistence and crash recovery via chrome.storage API.",
     tech: ["JavaScript", "Chrome APIs"],
+    url: "tabitorganizer.live",
   },
   {
-    name: "HTTP/1.1 Server & Private Cloud",
-    year: "",
-    desc: "HTTP/1.1 server built from scratch in Go without external frameworks. Self-hosted private cloud with streaming file I/O for multi-gigabyte transfers at constant memory overhead.",
-    tech: ["Go", "TCP/IP", "Linux"],
+    name: "Content Engine",
+    year: "2025",
+    subtitle: "CLIENT PROJECT",
+    desc: "End-to-end LinkedIn content intelligence pipeline built for a VC firm. Scrapes engagement data, runs AI analysis via Claude API, and outputs to structured Excel reports and an interactive Vercel dashboard.",
+    tech: ["Python", "Claude API", "PhantomBuster", "Apify", "Vercel"],
+    url: "github.com/shayansiddiqui172",
+    screenshot: "/projects/contentengine.png",
+  },
+  {
+    name: "Private Cloud",
+    year: "2025",
+    subtitle: "SYSTEMS PROJECT",
+    desc: "Self-hosted private cloud server built from scratch in Go on top of a raw TCP HTTP/1.1 server. Features JWT auth, SQLite-backed virtual folders, file versioning, and a Finder-style web UI. Deployed via Cloudflare Tunnel with no exposed home IP.",
+    tech: ["Go", "TCP/IP", "SQLite", "JWT", "Cloudflare", "Linux"],
+    url: "github.com/shayansiddiqui172",
+    screenshot: "/projects/privatecloud.png",
   },
   {
     name: "StatLine",
-    year: "",
-    desc: "Full-stack NBA analytics platform with sub-second page loads. PostgreSQL optimized for 500+ players via strategic indexing, reducing query latency by 15%.",
-    tech: ["Next.js", "TypeScript", "PostgreSQL", "Prisma"],
+    year: "2025",
+    subtitle: "FULL STACK WEB APP",
+    desc: "Full-stack NBA analytics platform with real-time data visualizations, sub-second page loads via Next.js SSR, and PostgreSQL optimized for 500+ players through strategic indexing and Prisma ORM.",
+    tech: ["Next.js", "TypeScript", "PostgreSQL", "Prisma", "Tailwind"],
+    url: "github.com/shayansiddiqui172",
+    screenshot: "/projects/statline.png",
   },
 ];
 
-function Card({ p }: { p: typeof PROJECTS[number] }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-t border-[#1a1a1a]">
-      <button
-        className="w-full flex items-center justify-between py-4 group text-left"
-        onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
-      >
-        <div className="flex items-baseline gap-4">
-          <span
-            style={{ fontSize: "var(--fs-small)" }}
-            className="text-[#fff] group-hover:text-[#00ffa8] transition-colors duration-150"
-          >
-            {p.name}
-          </span>
-          {p.year && (
-            <span style={{ fontSize: "var(--fs-meta)" }} className="text-[#404040]">{p.year}</span>
-          )}
-        </div>
-        <span
-          className="text-[#404040] transition-transform duration-200"
-          style={{ display: "inline-block", transform: open ? "rotate(180deg)" : "rotate(0deg)", fontSize: "var(--fs-meta)" }}
-        >
-          ↓
-        </span>
-      </button>
+type Project = typeof PROJECTS[number];
 
-      <div
-        className="overflow-hidden transition-all duration-300 ease-in-out"
-        style={{ maxHeight: open ? "300px" : "0" }}
+const INFO_STYLE: React.CSSProperties = {
+  fontSize: "1.2rem",
+  letterSpacing: "0.05em",
+  lineHeight: 1.6,
+  fontFamily: "var(--font-pixel)",
+};
+
+function PreviewFrame({ src }: { src: string }) {
+  return (
+    <div style={{
+      border: "1px solid #2a2a2a",
+      background: "#0a0a0a",
+      boxShadow: "0 0 0 1px #000, 0 10px 40px rgba(0,0,0,0.6)",
+      position: "relative",
+    }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        padding: "6px 8px",
+        borderBottom: "1px solid #1a1a1a",
+        background: "#111",
+      }}>
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#333" }} />
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#333" }} />
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#333" }} />
+      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" style={{ width: "100%", display: "block" }} />
+    </div>
+  );
+}
+
+function ProjectPreview({ src, show }: { src: string; show: boolean }) {
+  const NUM     = 7;       // 1 main + 6 ghosts stacked behind
+  const OFF_X   = 7;
+  const OFF_Y   = 4;
+  const STAGGER = 45;
+  const SLIDE   = 260;     // px offset when hidden (slid off right)
+  const DUR     = 700;
+  const EASE    = "cubic-bezier(0.16, 1, 0.3, 1)";
+
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "absolute",
+        right: -60,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: 720,
+        pointerEvents: "none",
+        zIndex: 0,
+      }}
+    >
+      {Array.from({ length: NUM }).map((_, i) => {
+        // i=0 → front (main). Higher i sits further back/down-right.
+        const enterDelay = i * STAGGER;                // cascade front→back
+        const exitDelay  = (NUM - 1 - i) * STAGGER;    // reverse: ghosts leave first
+        const delay      = show ? enterDelay : exitDelay;
+        const tx         = (show ? 0 : SLIDE) + i * OFF_X;
+        const ty         = i * OFF_Y;
+        const op         = show ? (i === 0 ? 1 : 0.8) : 0;
+        const isMain     = i === 0;
+
+        return (
+          <div
+            key={i}
+            style={{
+              position: isMain ? "relative" : "absolute",
+              top:   isMain ? undefined : 0,
+              left:  isMain ? undefined : 0,
+              width: "100%",
+              zIndex: NUM - i,
+              transform: `translate(${tx}px, ${ty}px)`,
+              opacity: op,
+              transition: `transform ${DUR}ms ${EASE} ${delay}ms, opacity ${DUR}ms ${EASE} ${delay}ms`,
+              willChange: "transform, opacity",
+            }}
+          >
+            <PreviewFrame src={src} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ProjectRow({ p, isActive, typedCount, allGreen, onEnter, onLeave }: {
+  p: Project;
+  isActive: boolean;
+  typedCount: number;
+  allGreen: boolean;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <div
+      className="relative"
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+    >
+      {"screenshot" in p && (p as typeof p & { screenshot?: string }).screenshot && (
+        <div className="hidden md:block">
+          <ProjectPreview
+            src={(p as typeof p & { screenshot: string }).screenshot}
+            show={isActive}
+          />
+        </div>
+      )}
+      <a
+        href={p.url.startsWith("http") ? p.url : `https://${p.url}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="relative block py-11"
+        style={{ zIndex: 1 }}
       >
-        <div className="pb-6 flex flex-col gap-3">
-          <p style={{ fontSize: "var(--fs-meta)" }} className="text-[#404040] leading-relaxed max-w-lg">
-            {p.desc}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {p.tech.map(t => (
-              <span
-                key={t}
-                style={{ fontSize: "var(--fs-meta)" }}
-                className="text-[#404040] border border-[#1a1a1a] px-2 py-0.5"
-              >
-                {t}
-              </span>
-            ))}
+        <div className="grid grid-cols-[0.7fr_1.4fr_auto] gap-6 items-start">
+          {/* LEFT — project name column */}
+          <div className="min-w-0">
+            <div className="mb-4">
+              <DotMatrixText text="/ PR NAME" dotSize={2} color="#888888" />
+            </div>
+
+            {/* Project name — always per-char to avoid canvas unmount/remount flash */}
+            <div
+              className="mb-5"
+              style={{
+                display: "inline-flex",
+                flexWrap: "wrap",
+                alignItems: "flex-start",
+                gap: "6px 18px",
+                background: allGreen ? "#00ff88" : "transparent",
+                padding: allGreen ? "2px 4px" : 0,
+                transition: "background 80ms, padding 80ms",
+              }}
+            >
+              {(() => {
+                const words = p.name.split(" ");
+                let offset = 0;
+                return words.map((word, wi) => {
+                  const wordStart = offset;
+                  offset += word.length + 1;
+                  return (
+                    <span key={wi} style={{ display: "inline-flex", alignItems: "flex-start" }}>
+                      {word.split("").map((ch, ci) => {
+                        const charIdx   = wordStart + ci;
+                        const isTyping  = isActive && typedCount > 0;
+                        const shown     = !isTyping || charIdx < typedCount;
+                        const isCurrent = isTyping && charIdx === typedCount - 1;
+                        const highlight = allGreen || isCurrent;
+                        return (
+                          <span
+                            key={ci}
+                            style={{
+                              display: "inline-block",
+                              visibility: shown ? "visible" : "hidden",
+                              background: highlight ? "#00ff88" : "transparent",
+                              marginRight: ci < word.length - 1 ? 6 : 0,
+                            }}
+                          >
+                            {/* color always #ffffff — invert via CSS so canvas never repaints */}
+                            <DotMatrixText
+                              text={ch}
+                              dotSize={3}
+                              color="#ffffff"
+                              fine
+                              style={{ filter: highlight ? "invert(1)" : "none" }}
+                            />
+                          </span>
+                        );
+                      })}
+                    </span>
+                  );
+                });
+              })()}
+            </div>
+
+            <div className="flex flex-col gap-0">
+              <div className="flex items-center gap-3">
+                <span style={{ fontSize: "var(--fs-meta)", fontFamily: "var(--font-receipt)", color: "#555555" }}>
+                  {p.year}
+                </span>
+                <span style={{ width: 20, height: 20, background: "#00ff88", display: "inline-block", flexShrink: 0 }} />
+                {p.subtitle && (
+                  <DotMatrixText text={p.subtitle} dotSize={1.5} color="#555555" fine />
+                )}
+              </div>
+              {"note" in p && (p as typeof p & { note?: string }).note && (
+                <div style={{ paddingLeft: 107 }}>
+                  <DotMatrixText text={(p as typeof p & { note: string }).note} dotSize={1.5} color="#555555" fine />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* CENTER — info column */}
+          <div className="min-w-0">
+            <div className="mb-4">
+              <DotMatrixText text="/ INFO" dotSize={2} color="#888888" />
+            </div>
+            <p style={{ ...INFO_STYLE, color: "#777777", marginBottom: "0.6rem" }}>
+              {p.desc}
+            </p>
+            <p style={{ ...INFO_STYLE, marginBottom: "0.4rem" }}>
+              <span style={{ color: "#00ff88" }}>TECH:</span>{" "}
+              <span style={{ color: "#999999" }}>{p.tech.join(", ")}</span>
+            </p>
+          </div>
+
+          {/* RIGHT — visit site */}
+          <div className="self-center whitespace-nowrap">
+            <span style={{ fontSize: "var(--fs-small)", color: "#ffffff", fontFamily: "var(--font-receipt)" }}>
+              VISIT SITE →
+            </span>
           </div>
         </div>
-      </div>
+      </a>
     </div>
   );
 }
 
 export default function Projects() {
   const ref = useReveal<HTMLElement>();
+  const [activeProject, setActiveProject] = useState<number | null>(null);
+  const [typedCount, setTypedCount] = useState(0);
+  const [allGreen, setAllGreen] = useState(false);
+  const timersRef    = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
+
+  function startAnimation(index: number) {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    setTypedCount(0);
+    setAllGreen(false);
+    setActiveProject(index);
+    const name = PROJECTS[index].name;
+    name.split("").forEach((_, i) => {
+      const t = setTimeout(() => {
+        setTypedCount(i + 1);
+        if (i === name.length - 1) setAllGreen(true);
+      }, (i + 1) * 40);
+      timersRef.current.push(t);
+    });
+  }
+
+  function stopAnimation() {
+    if (hoverTimerRef.current) { clearTimeout(hoverTimerRef.current); hoverTimerRef.current = null; }
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    setTypedCount(0);
+    setAllGreen(false);
+    setActiveProject(null);
+  }
+
   return (
-    <section id="projects" ref={ref} className="reveal px-8 md:px-16 py-20" aria-label="Projects">
-      <DotMatrixText text="projects" dotSize={7} color="#ffffff" className="mb-10" animate />
-      <div className="max-w-xl">
-        {PROJECTS.map((p, i) => <Card key={i} p={p} />)}
-        <div className="border-t border-[#1a1a1a]" />
+    <section
+      id="projects"
+      ref={ref}
+      className="reveal px-8 md:px-16 py-20"
+      aria-label="Projects"
+    >
+      <DotMatrixText
+        text="projects"
+        dotSize={11}
+        color="#ffffff"
+        className="mb-10"
+        animate
+      />
+      <div>
+        {PROJECTS.map((p, i) => (
+          <ProjectRow
+            key={i}
+            p={p}
+            isActive={activeProject === i}
+            typedCount={activeProject === i ? typedCount : 0}
+            allGreen={activeProject === i ? allGreen : false}
+            onEnter={() => {
+                if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+                hoverTimerRef.current = setTimeout(() => startAnimation(i), 250);
+              }}
+            onLeave={stopAnimation}
+          />
+        ))}
       </div>
     </section>
   );

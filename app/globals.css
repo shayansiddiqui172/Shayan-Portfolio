@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Fake Receipt';
+  src: url('/fonts/FakeReceipt.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ── Fluid typography vars (matching LT Terminal Mono character ratio) ──
    font-size = 99vw × letter-ratio ÷ letter-count
    Space Mono char width ≈ 0.601× height → ratio ≈ 1.664            */
@@ -10,6 +18,7 @@
   --color-dim:       #404040;
   --color-border:    #1a1a1a;
   --font-mono:       'Share Tech Mono', monospace;
+  --font-receipt:    'Fake Receipt', monospace;
 }
 
 /* ── Base ── */
