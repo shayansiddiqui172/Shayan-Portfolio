@@ -17,13 +17,13 @@ function BeltCopy({ items }: { items: string[] }) {
         <span key={i} className="inline-flex items-center">
           <span
             className="font-mono uppercase cursor-default"
-            style={{ fontSize: "0.85rem", color: "#cccccc" }}
+            style={{ fontSize: "1.5rem", color: "#cccccc", fontFamily: "var(--font-receipt)" }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#00ff88"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#cccccc"; }}
           >
             {item}
           </span>
-          <span className="font-mono mx-3" style={{ fontSize: "0.85rem", color: "#444444" }}>·</span>
+          <span className="font-mono mx-4" style={{ fontSize: "1.5rem", color: "#444444", fontFamily: "var(--font-receipt)" }}>·</span>
         </span>
       ))}
     </div>
@@ -71,14 +71,14 @@ export default function Stack() {
   const ref = useReveal<HTMLElement>();
   return (
     <section id="stack" ref={ref} className="reveal px-8 md:px-16 py-20" aria-label="Technologies">
-      <DotMatrixText text="technologies" dotSize={7} color="#ffffff" className="mb-10" animate />
+      <DotMatrixText text="technologies" dotSize={7} color="#ffffff" className="mb-16" animate />
 
-      <div className="flex flex-col gap-5 mx-auto" style={{ width: "fit-content" }}>
+      <div className="flex flex-col gap-7 mx-auto pt-20 pb-8" style={{ width: "fit-content" }}>
         {CATEGORIES.map(cat => (
-          <div key={cat.label} className="flex items-center gap-4">
+          <div key={cat.label} className="flex items-center gap-12">
             <span
-              className="font-mono text-[#444444] text-right shrink-0"
-              style={{ fontSize: "0.75rem", width: "96px" }}
+              className="font-mono text-[#666666] text-right shrink-0"
+              style={{ fontSize: "1.75rem", width: "190px", fontFamily: "var(--font-receipt)" }}
             >
               {cat.label}
             </span>
@@ -86,9 +86,9 @@ export default function Stack() {
             <div
               className="relative overflow-hidden shrink-0"
               style={{
-                width: "600px",
-                maskImage: "linear-gradient(to right, transparent 0px, black 80px, black 520px, transparent 600px)",
-                WebkitMaskImage: "linear-gradient(to right, transparent 0px, black 80px, black 520px, transparent 600px)",
+                width: "900px",
+                maskImage: "linear-gradient(to right, transparent 0px, black 110px, black 790px, transparent 900px)",
+                WebkitMaskImage: "linear-gradient(to right, transparent 0px, black 110px, black 790px, transparent 900px)",
               }}
             >
               <Belt items={cat.items} speed={cat.speed} />

@@ -324,7 +324,7 @@ export default function Projects() {
     >
       <DotMatrixText
         text="projects"
-        dotSize={11}
+        dotSize={7}
         color="#ffffff"
         className="mb-10"
         animate

@@ -361,7 +361,7 @@ export default function Experience() {
 
         {/* Heading — entrance wrapper */}
         <div data-exp-heading="" className="mb-10">
-          <DotMatrixText text="experience" dotSize={11} color="#ffffff" animate />
+          <DotMatrixText text="experience" dotSize={7} color="#ffffff" animate />
         </div>
 
         {/* ── Desktop timeline ── */}
