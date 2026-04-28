@@ -280,14 +280,31 @@ export default function Projects() {
   const [activeProject, setActiveProject] = useState<number | null>(null);
   const [typedCount, setTypedCount] = useState(0);
   const [allGreen, setAllGreen] = useState(false);
-  const timersRef    = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const timersRef     = useRef<ReturnType<typeof setTimeout>[]>([]);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listRef       = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     return () => {
       timersRef.current.forEach(clearTimeout);
       if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("proj-visible");
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   function startAnimation(index: number) {
@@ -329,7 +346,7 @@ export default function Projects() {
         className="mb-10"
         animate
       />
-      <div>
+      <div ref={listRef} className="proj-row">
         {PROJECTS.map((p, i) => (
           <ProjectRow
             key={i}

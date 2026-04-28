@@ -72,6 +72,32 @@ body {
   transform: translateY(0);
 }
 
+/* ── Project row staggered reveal ── */
+.proj-row {
+  opacity: 0;
+  transform: translateY(70px);
+  transition: opacity .85s cubic-bezier(0.16,1,0.3,1), transform .85s cubic-bezier(0.16,1,0.3,1);
+}
+.proj-row.proj-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Belt row morph-in ── */
+.belt-row {
+  opacity: 0;
+  filter: blur(20px);
+  transform: translateY(44px) scale(0.93);
+  transition: opacity 1.3s cubic-bezier(0.16,1,0.3,1),
+              filter  1.3s cubic-bezier(0.16,1,0.3,1),
+              transform 1.3s cubic-bezier(0.16,1,0.3,1);
+}
+.belt-row.belt-visible {
+  opacity: 1;
+  filter: blur(0px);
+  transform: translateY(0) scale(1);
+}
+
 /* ── Section heading ── */
 .section-label {
   font-size: var(--fs-small);

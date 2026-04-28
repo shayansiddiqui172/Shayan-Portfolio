@@ -17,6 +17,18 @@ Personal portfolio for Shayan Siddiqui. Next.js app, dark terminal aesthetic.
 
 All colors live in `app/globals.css` (`@theme inline` block). Keep new UI consistent with these.
 
+## Page sections (top → bottom)
+Each section has a `DotMatrixText` heading (`dotSize={7}`) followed by its content:
+1. **Hero** — full-screen canvas intro animation (`components/Hero.tsx`)
+2. **Experience** — timeline of roles (`components/Experience.tsx`)
+3. **Projects** — project rows with hover animation; each row individually animates in on scroll via per-row `IntersectionObserver` (`components/Projects.tsx`, CSS class `proj-row` / `proj-visible`)
+4. **Technologies** — infinite horizontal scrolling belts per category, no `.reveal` wrapper (belt rows self-animate via `BeltRow` component with `belt-row` / `belt-visible` CSS) (`components/Stack.tsx`)
+5. **Biography** — about text (`components/About.tsx`)
+6. **More About Me** — hobbies/reading (`components/Hobbies.tsx`)
+7. **Contact** — email, GitHub, LinkedIn in one horizontal row (`components/Contact.tsx`)
+
+All section headings use `dotSize={7}` on `DotMatrixText`. Most sections use `useReveal` + `.reveal` / `.reveal.visible` for scroll-in; Stack is an exception (removed to avoid parent-opacity conflicts with per-row animations).
+
 ## Key files
 - `app/page.tsx` — root layout: Cursor, Hero, section components, KeyboardShortcuts
 - `components/Hero.tsx` — entire hero section + canvas intro animation (Phase 0–3)
