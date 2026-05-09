@@ -3,113 +3,160 @@ import { useEffect, useRef } from "react";
 import { useReveal } from "@/hooks/useReveal";
 import DotMatrixText from "./DotMatrixText";
 
-const SCRAMBLE_NOISE = "+,./|~!@#%^&*=xXkK";
+const HOBBIES: Array<{ label: string; image: "car" | "book" | null }> = [
+  { label: "cars",   image: "car"  },
+  { label: "books",  image: "book" },
+  { label: "music",  image: null   },
+  { label: "sports", image: null   },
+];
 
-function AsciiBanner() {
-  const preRef   = useRef<HTMLPreElement>(null);
-  const stateRef = useRef({ text: "", started: false, rafId: 0 });
-  const wrapRef  = useRef<HTMLDivElement>(null);
+function CarAsciiCell() {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const preRef  = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
     fetch("/banner2.txt").then(r => r.text()).then(text => {
-      stateRef.current.text = text;
+      if (preRef.current) preRef.current.textContent = text;
     });
   }, []);
 
   useEffect(() => {
     const wrap = wrapRef.current;
-    if (!wrap) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !stateRef.current.started) {
-          stateRef.current.started = true;
-          if (stateRef.current.text) scramble(stateRef.current.text);
-        }
-      },
-      { threshold: 0.2 }
-    );
-    obs.observe(wrap);
-    return () => obs.disconnect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const pre  = preRef.current;
+    if (!wrap || !pre) return;
 
-  function scramble(text: string) {
-    const pre = preRef.current;
-    if (!pre) return;
-    cancelAnimationFrame(stateRef.current.rafId);
-    const DURATION = 700;
-    const start = performance.now();
-    const el = pre;
+    // banner2.txt is 400 chars wide; JetBrains Mono char width ≈ 0.601× font-size
+    const update = () => {
+      const fontSize = wrap.clientWidth / 400 / 0.601;
+      pre.style.fontSize = `${fontSize}px`;
+    };
 
-    function tick() {
-      const progress = Math.min(1, (performance.now() - start) / DURATION);
-      if (progress >= 1) { el.textContent = text; return; }
-      const resolved = Math.floor(progress * progress * text.length);
-      const out: string[] = new Array(text.length);
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
-        if (ch === "\n" || ch === " " || i < resolved) { out[i] = ch; continue; }
-        out[i] = Math.random() < progress * 0.4
-          ? ch
-          : SCRAMBLE_NOISE[Math.floor(Math.random() * SCRAMBLE_NOISE.length)];
-      }
-      el.textContent = out.join("");
-      stateRef.current.rafId = requestAnimationFrame(tick);
-    }
-
-    stateRef.current.rafId = requestAnimationFrame(tick);
-  }
-
-  useEffect(() => () => cancelAnimationFrame(stateRef.current.rafId), []);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, []);
 
   return (
-    <div ref={wrapRef}>
+    <div ref={wrapRef} className="absolute inset-0 overflow-hidden">
       <pre
         ref={preRef}
         aria-hidden="true"
         style={{
           fontFamily: "var(--font-jetbrains)",
-          fontSize: "0.17rem",
           lineHeight: 1,
           color: "#aaaaaa",
           margin: 0,
           whiteSpace: "pre",
-          overflow: "hidden",
-          maxWidth: "100%",
+          display: "block",
         }}
       />
     </div>
   );
 }
 
-const BOOKS = [
-  { title: "Book Title", author: "Author" },
-  { title: "Book Title", author: "Author" },
-  { title: "Book Title", author: "Author" },
-];
+function BookImageCell() {
+  const wrapRef  = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const wrap  = wrapRef.current;
+    const frame = frameRef.current;
+    if (!wrap || !frame) return;
+
+    const update = () => {
+      const scale = wrap.clientWidth / 4000;
+      frame.style.transform = `scale(${scale})`;
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div ref={wrapRef} className="absolute inset-0 overflow-hidden">
+      <iframe
+        ref={frameRef}
+        src="/bookimage.html"
+        title="book art"
+        scrolling="no"
+        style={{
+          border: "none",
+          width: "4000px",
+          height: "4000px",
+          transformOrigin: "0 0",
+          pointerEvents: "none",
+          display: "block",
+          filter: "grayscale(1) brightness(0.8)",
+        }}
+      />
+      {/* dark vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "rgba(0,0,0,0.35)" }}
+      />
+      {/* scanlines */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px)",
+        }}
+      />
+    </div>
+  );
+}
 
 export default function Hobbies() {
   const ref = useReveal<HTMLElement>();
+
   return (
-    <section id="hobbies" ref={ref} className="reveal px-8 md:px-16 py-20" aria-label="More About Me">
-      <DotMatrixText text="more about me" dotSize={7} color="#ffffff" className="mb-10" animate />
-      <div className="flex flex-col md:flex-row gap-10 md:gap-16">
-        <div className="md:w-1/2">
-          <DotMatrixText text="currently reading" dotSize={4} color="#ffffff" className="mb-4" />
-          <div className="flex flex-col gap-3 max-w-sm">
-            {BOOKS.map((b, i) => (
-              <div key={i} className="flex items-baseline gap-2">
-                <span style={{ fontSize: "var(--fs-meta)" }} className="text-[#404040]">
-                  {String(i + 1).padStart(2, "0")}.
-                </span>
-                <span style={{ fontSize: "var(--fs-small)" }} className="text-[#fff]">{b.title}</span>
-                <span style={{ fontSize: "var(--fs-meta)" }} className="text-[#404040]">— {b.author}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="hidden md:flex md:w-1/2 items-center overflow-hidden">
-          <AsciiBanner />
-        </div>
+    <section id="hobbies" ref={ref} className="reveal py-20" aria-label="More About Me">
+
+      {/* ── Padded header ── */}
+      <div className="px-8 md:px-16 mb-14">
+        <DotMatrixText text="hobbies and interests" dotSize={7} color="#ffffff" className="mb-10" animate />
+      </div>
+
+      {/* ── Full-width checkerboard grid ── */}
+      <div>
+        {HOBBIES.map((hobby, i) => {
+          const isEven = i % 2 === 0;
+
+          const labelCell = (
+            <div
+              className="flex items-center justify-center bg-[#0a0a0a] overflow-hidden
+                         h-[40vh] md:h-auto md:flex-1"
+            >
+              <DotMatrixText text={hobby.label} color="#ffffff" dotSize={14} />
+            </div>
+          );
+
+          const imageCell = (
+            <div
+              className="relative overflow-hidden bg-[#080808]
+                         h-[28vh] md:h-auto md:flex-1"
+            >
+              {hobby.image === "car"  && <CarAsciiCell />}
+              {hobby.image === "book" && <BookImageCell />}
+            </div>
+          );
+
+          return (
+            <div
+              key={hobby.label}
+              className="flex flex-col md:flex-row md:h-[40vh]"
+            >
+              {isEven ? (
+                <>{labelCell}{imageCell}</>
+              ) : (
+                <>{imageCell}{labelCell}</>
+              )}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
