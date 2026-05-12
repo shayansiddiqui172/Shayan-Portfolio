@@ -6,8 +6,6 @@ import DotMatrixText, { FINE, gridCols, renderSegmented } from "./DotMatrixText"
 
 /* ─── Animation constants ─────────────────────────────────────────────────── */
 const NAME = "SHAYAN SIDDIQUI";
-const ACCENT_COLOR = "#00ff88";
-const BG_DARK = "#0A0A0A";
 const ANIMATION_SPEED = 1.15;
 
 const ROLES = ["software engineer", "full-stack developer", "systems developer"];

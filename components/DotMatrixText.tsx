@@ -182,23 +182,6 @@ export function renderSegmented(
   return totalH;
 }
 
-/* ─── Legacy wrappers (used by Hero animation with standard set) ─────────── */
-export function renderDotText(
-  ctx: CanvasRenderingContext2D, text: string,
-  cx: number, cy: number, totalWidth: number,
-  color = "#fff", fillOverride?: number,
-) {
-  return renderDots(ctx, text, cx, cy, totalWidth, color, STANDARD, fillOverride);
-}
-
-export function renderSegmentedText(
-  ctx: CanvasRenderingContext2D, text: string,
-  cx: number, cy: number, totalWidth: number,
-  color = "#fff", fillOverride?: number,
-) {
-  return renderSegmented(ctx, text, cx, cy, totalWidth, color, STANDARD, fillOverride);
-}
-
 /* ─── Reusable component ─────────────────────────────────────────────────── */
 interface Props {
   text: string;

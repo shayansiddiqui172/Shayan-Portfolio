@@ -98,17 +98,9 @@ body {
   transform: translateY(0) scale(1);
 }
 
-/* ── Section heading ── */
-.section-label {
-  font-size: var(--fs-small);
-  color: #404040;
-  letter-spacing: .06em;
-  margin-bottom: 2.5rem;
-}
 
 /* ── Timeline ── */
 .tl-line { position: absolute; left: 0; top: 6px; bottom: 0; width: 1px; background: #1a1a1a; }
-.tl-dot  { position: absolute; left: -4px; top: 6px; width: 9px; height: 9px; border: 1px solid #00ffa8; background: #000; border-radius: 50%; }
 
 /* ── Hide cursor on touch ── */
 @media (pointer: coarse) {
