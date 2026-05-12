@@ -1,6 +1,5 @@
 "use client";
-import { useEffect, useLayoutEffect, useRef } from "react";
-import { useReveal } from "@/hooks/useReveal";
+import { useEffect, useRef } from "react";
 import DotMatrixText from "./DotMatrixText";
 
 const HOBBIES: Array<{ label: string; image: "car" | "book" | "music" | "outdoors" | null }> = [
@@ -10,105 +9,137 @@ const HOBBIES: Array<{ label: string; image: "car" | "book" | "music" | "outdoor
   { label: "outdoors", image: "outdoors" },
 ];
 
-// ─── Shared animation core ────────────────────────────────────────────────────
-// Draws noise into a rect on the given canvas, then clears shuffled TILE×TILE
-// blocks over DURATION ms. Returns a cancel fn.
-function animateNoiseReveal(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number,
-  onDone: () => void,
-): () => void {
-  // Fill region with fine-grain static noise
-  const id = ctx.createImageData(w, h);
-  for (let i = 0; i < id.data.length; i += 4) {
-    const v = (Math.random() * 255) | 0;
-    id.data[i] = id.data[i + 1] = id.data[i + 2] = v;
-    id.data[i + 3] = 255;
-  }
-  ctx.putImageData(id, x, y);
+// ─── Pixel-morph (dark cover → reveal) ───────────────────────────────────────
+const TILE = 5;
+const MORPH_DURATION = 950;
 
-  const TILE = 3;
-  const cols  = Math.ceil(w / TILE);
-  const rows  = Math.ceil(h / TILE);
-  const tiles: [number, number][] = [];
+function smoothstep(p: number) { return p * p * (3 - 2 * p); }
+
+type PreparedMorph = {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  tiles: [number, number][];
+  rx: number; ry: number;
+};
+
+function prepare(
+  cell: HTMLElement,
+  region?: { x: number; y: number; w: number; h: number },
+): PreparedMorph | null {
+  const canvas = cell.querySelector<HTMLCanvasElement>("canvas[data-pr]");
+  if (!canvas) return null;
+  const W = cell.clientWidth;
+  const H = cell.clientHeight;
+  if (!W || !H) return null;
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const rx = region?.x ?? 0;
+  const ry = region?.y ?? 0;
+  const rw = region?.w ?? W;
+  const rh = region?.h ?? H;
+
+  ctx.fillStyle = "#0a0a0a";
+  ctx.fillRect(rx, ry, rw, rh);
+
+  const cols = Math.ceil(rw / TILE);
+  const rows = Math.ceil(rh / TILE);
+  const tiles: [number, number][] = new Array(cols * rows);
   for (let r = 0; r < rows; r++)
     for (let c = 0; c < cols; c++)
-      tiles.push([r, c]);
+      tiles[r * cols + c] = [r, c];
   for (let i = tiles.length - 1; i > 0; i--) {
     const j = (Math.random() * (i + 1)) | 0;
-    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+    const t = tiles[i]; tiles[i] = tiles[j]; tiles[j] = t;
   }
 
-  const DURATION = 1400;
-  const start    = performance.now();
-  let revealed   = 0;
-  let raf        = 0;
+  return { canvas, ctx, tiles, rx, ry };
+}
+
+// Measures the text element's bounding box relative to the cell so the morph
+// covers only the text area, not the surrounding padding.
+function prepareText(cell: HTMLElement): PreparedMorph | null {
+  const textEl = cell.querySelector<HTMLElement>(":scope > :not(canvas[data-pr])");
+  if (!textEl) return prepare(cell);
+  const cr = cell.getBoundingClientRect();
+  const tr = textEl.getBoundingClientRect();
+  return prepare(cell, {
+    x: Math.floor(tr.left - cr.left),
+    y: Math.floor(tr.top  - cr.top),
+    w: Math.ceil(tr.width),
+    h: Math.ceil(tr.height),
+  });
+}
+
+function startMorph(p: PreparedMorph): () => void {
+  const { canvas, ctx, tiles, rx, ry } = p;
+  let revealed = 0;
+  let raf      = 0;
+  const start  = performance.now();
 
   const step = (now: number) => {
-    const p      = Math.min((now - start) / DURATION, 1);
-    const eased  = 1 - (1 - p) ** 3;
-    const target = (eased * tiles.length) | 0;
+    const t      = Math.min((now - start) / MORPH_DURATION, 1);
+    const target = (smoothstep(t) * tiles.length) | 0;
     while (revealed < target) {
       const [r, c] = tiles[revealed++];
-      ctx.clearRect(x + c * TILE, y + r * TILE, TILE, TILE);
+      ctx.clearRect(rx + c * TILE, ry + r * TILE, TILE, TILE);
     }
-    if (p < 1) raf = requestAnimationFrame(step);
-    else onDone();
+    if (t < 1) raf = requestAnimationFrame(step);
+    else canvas.style.display = "none";
   };
 
   raf = requestAnimationFrame(step);
   return () => cancelAnimationFrame(raf);
 }
 
-// Full-cell pixel reveal — used by image cells.
-function runPixelReveal(cell: HTMLElement): () => void {
-  const canvas = cell.querySelector<HTMLCanvasElement>("canvas[data-pr]");
-  if (!canvas) return () => {};
-  const W = cell.clientWidth;
-  const H = cell.clientHeight;
-  canvas.width  = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return () => {};
-
-  let cancel = () => {};
-  const raf = requestAnimationFrame(() => {
-    cell.style.opacity = "1";
-    cancel = animateNoiseReveal(ctx, 0, 0, W, H, () => { canvas.style.display = "none"; });
-  });
-
-  return () => { cancelAnimationFrame(raf); cancel(); };
+function PRCanvas() {
+  return (
+    <canvas
+      data-pr
+      aria-hidden
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 20 }}
+    />
+  );
 }
 
-// Text-only reveal — noise covers only the DotMatrixText bounding box.
-// The black cell background appears instantly; only the text materialises.
-function runTextReveal(cell: HTMLElement): () => void {
-  const canvas  = cell.querySelector<HTMLCanvasElement>("canvas[data-pr]");
-  const textEl  = cell.querySelector<HTMLElement>(":scope > :not(canvas[data-pr])");
-  if (!canvas || !textEl) return () => {};
+// ─── Shared hook for prepare+morph IO pair ────────────────────────────────────
+function useMorph(
+  ref: React.RefObject<HTMLElement | null>,
+  buildFn: (el: HTMLElement) => PreparedMorph | null,
+  threshold = 0.05,
+) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let data: PreparedMorph | null = null;
+    let built = false;
+    let cancel: (() => void) | null = null;
 
-  const W = cell.clientWidth;
-  const H = cell.clientHeight;
-  canvas.width  = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return () => {};
+    const doBuild = () => {
+      if (built) return;
+      built = true;
+      data = buildFn(el);
+    };
 
-  // Measure text position relative to cell
-  const cellRect = cell.getBoundingClientRect();
-  const textRect = textEl.getBoundingClientRect();
-  const tx = Math.floor(textRect.left - cellRect.left);
-  const ty = Math.floor(textRect.top  - cellRect.top);
-  const tw = Math.ceil(textRect.width);
-  const th = Math.ceil(textRect.height);
+    const prepIo = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      prepIo.disconnect();
+      doBuild();
+    }, { rootMargin: "1400px 0px", threshold: 0 });
+    prepIo.observe(el);
 
-  let cancel = () => {};
-  const raf = requestAnimationFrame(() => {
-    cell.style.opacity = "1";
-    cancel = animateNoiseReveal(ctx, tx, ty, tw, th, () => { canvas.style.display = "none"; });
-  });
+    const morphIo = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      morphIo.disconnect();
+      doBuild();
+      if (data) cancel = startMorph(data);
+    }, { threshold });
+    morphIo.observe(el);
 
-  return () => { cancelAnimationFrame(raf); cancel(); };
+    return () => { prepIo.disconnect(); morphIo.disconnect(); cancel?.(); };
+  }, []);
 }
 
 // ─── Image cells ─────────────────────────────────────────────────────────────
@@ -127,9 +158,7 @@ function CarAsciiCell() {
     const wrap = wrapRef.current;
     const pre  = preRef.current;
     if (!wrap || !pre) return;
-    const update = () => {
-      pre.style.fontSize = `${wrap.clientWidth / 400 / 0.601}px`;
-    };
+    const update = () => { pre.style.fontSize = `${wrap.clientWidth / 400 / 0.601}px`; };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(wrap);
@@ -137,35 +166,33 @@ function CarAsciiCell() {
   }, []);
 
   return (
-    <div ref={wrapRef} className="absolute inset-0 overflow-hidden">
+    // translateZ(0) promotes to its own compositor layer so clearRect on the
+    // sibling PRCanvas doesn't force a repaint of the <pre> text each frame.
+    <div ref={wrapRef} className="absolute inset-0 overflow-hidden" style={{ transform: "translateZ(0)" }}>
       <pre
         ref={preRef}
         aria-hidden="true"
-        style={{
-          fontFamily: "var(--font-jetbrains)",
-          lineHeight: 1,
-          color: "#aaaaaa",
-          margin: 0,
-          whiteSpace: "pre",
-          display: "block",
-        }}
+        style={{ fontFamily: "var(--font-jetbrains)", lineHeight: 1, color: "#aaaaaa", margin: 0, whiteSpace: "pre", display: "block" }}
       />
     </div>
   );
 }
 
 function CacaIframeCell({
-  src, title, align = "top", grayscale = false,
+  src, title, align = "top", grayscale = false, zoom = 1,
 }: {
   src: string; title: string;
   align?: "top" | "center" | "bottom";
   grayscale?: boolean;
+  zoom?: number;
 }) {
   const wrapRef  = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const dimsRef  = useRef({ w: 1, h: 1 });
   const alignRef = useRef(align);
+  const zoomRef  = useRef(zoom);
   alignRef.current = align;
+  zoomRef.current  = zoom;
 
   useEffect(() => {
     const wrap  = wrapRef.current;
@@ -174,24 +201,22 @@ function CacaIframeCell({
 
     const update = () => {
       const { w, h } = dimsRef.current;
-      const scale      = wrap.clientWidth / w;
-      const scaledH    = h * scale;
-      const containerH = wrap.clientHeight;
-      let ty = 0;
-      if (alignRef.current === "bottom") ty = containerH - scaledH;
-      else if (alignRef.current === "center") ty = (containerH - scaledH) / 2;
-      frame.style.transform = `translateY(${ty}px) scale(${scale})`;
+      const scale   = (wrap.clientWidth / w) * zoomRef.current;
+      const tx      = (wrap.clientWidth  - w * scale) / 2;
+      let   ty      = 0;
+      if (alignRef.current === "bottom") ty = wrap.clientHeight - h * scale;
+      else if (alignRef.current === "center") ty = (wrap.clientHeight - h * scale) / 2;
+      frame.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
     };
 
     const measure = () => {
       try {
         const doc = frame.contentDocument;
         if (!doc) return;
-        doc.body.style.margin     = "0";
-        doc.body.style.padding    = "0";
+        doc.body.style.margin = doc.body.style.padding = "0";
         doc.body.style.background = "#0a0a0a";
-        const outerDiv = doc.body.querySelector("div");
-        if (outerDiv) (outerDiv as HTMLElement).style.background = "#0a0a0a";
+        const d = doc.body.querySelector("div");
+        if (d) (d as HTMLElement).style.background = "#0a0a0a";
         const w = doc.documentElement.scrollWidth || doc.body.scrollWidth;
         const h = doc.documentElement.scrollHeight || doc.body.scrollHeight;
         if (w > 0) {
@@ -204,38 +229,25 @@ function CacaIframeCell({
     };
 
     frame.addEventListener("load", measure);
-    if (frame.contentDocument?.readyState === "complete") measure();
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { frame.src = src; io.disconnect(); }
+    }, { rootMargin: "800px 0px" });
+    io.observe(wrap);
     const ro = new ResizeObserver(update);
     ro.observe(wrap);
-    return () => { ro.disconnect(); frame.removeEventListener("load", measure); };
-  }, []);
+    return () => { ro.disconnect(); io.disconnect(); frame.removeEventListener("load", measure); };
+  }, [src]);
 
   return (
     <div ref={wrapRef} className="absolute inset-0 overflow-hidden">
       <iframe
         ref={frameRef}
-        src={src}
         title={title}
         scrolling="no"
-        style={{
-          border: "none",
-          outline: "none",
-          width: "1px",
-          height: "1px",
-          transformOrigin: "0 0",
-          pointerEvents: "none",
-          display: "block",
-          filter: grayscale ? "grayscale(1)" : undefined,
-        }}
+        style={{ border: "none", outline: "none", width: "1px", height: "1px", transformOrigin: "0 0", pointerEvents: "none", display: "block", filter: grayscale ? "grayscale(1)" : undefined }}
       />
       <div className="absolute inset-0 pointer-events-none" style={{ background: "rgba(0,0,0,0.35)" }} />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px)",
-        }}
-      />
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px)" }} />
     </div>
   );
 }
@@ -248,23 +260,16 @@ function BookImageCell() {
     const wrap  = wrapRef.current;
     const frame = frameRef.current;
     if (!wrap || !frame) return;
-    const update = () => {
-      frame.style.transform = `scale(${wrap.clientWidth / 4000})`;
-    };
+    const update = () => { frame.style.transform = `scale(${wrap.clientWidth / 4000})`; };
     const onLoad = () => {
       try {
         const doc = frame.contentDocument;
-        if (doc) {
-          doc.body.style.margin     = "0";
-          doc.body.style.padding    = "0";
-          doc.body.style.background = "#0a0a0a";
-        }
+        if (doc) { doc.body.style.margin = doc.body.style.padding = "0"; doc.body.style.background = "#0a0a0a"; }
       } catch {}
       update();
     };
     frame.addEventListener("load", onLoad);
-    if (frame.contentDocument?.readyState === "complete") onLoad();
-    else update();
+    if (frame.contentDocument?.readyState === "complete") onLoad(); else update();
     const ro = new ResizeObserver(update);
     ro.observe(wrap);
     return () => { ro.disconnect(); frame.removeEventListener("load", onLoad); };
@@ -277,79 +282,21 @@ function BookImageCell() {
         src="/bookimage.html"
         title="book art"
         scrolling="no"
-        style={{
-          border: "none",
-          outline: "none",
-          width: "4000px",
-          height: "4000px",
-          transformOrigin: "0 0",
-          pointerEvents: "none",
-          display: "block",
-          filter: "grayscale(1) brightness(0.8)",
-        }}
+        style={{ border: "none", outline: "none", width: "4000px", height: "4000px", transformOrigin: "0 0", pointerEvents: "none", display: "block", filter: "grayscale(1) brightness(0.8)" }}
       />
       <div className="absolute inset-0 pointer-events-none" style={{ background: "rgba(0,0,0,0.35)" }} />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px)",
-        }}
-      />
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px)" }} />
     </div>
   );
 }
 
-// Pixel-reveal canvas — sits on top of each cell's content
-function PRCanvas() {
-  return (
-    <canvas
-      data-pr
-      aria-hidden
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
-        zIndex: 20,
-      }}
-    />
-  );
-}
-
 // ─── Row ─────────────────────────────────────────────────────────────────────
-// One IntersectionObserver per row fires runPixelReveal on BOTH cells
-// simultaneously so the label text and the image form at the same time.
 function HobbyRow({ hobby, index }: { hobby: typeof HOBBIES[number]; index: number }) {
-  const rowRef   = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
   const imgRef   = useRef<HTMLDivElement>(null);
 
-  // Hide both cells immediately after mount (before first paint where possible)
-  useLayoutEffect(() => {
-    if (labelRef.current) labelRef.current.style.opacity = "0";
-    if (imgRef.current)   imgRef.current.style.opacity   = "0";
-  }, []);
-
-  useEffect(() => {
-    const row   = rowRef.current;
-    const label = labelRef.current;
-    const img   = imgRef.current;
-    if (!row) return;
-
-    const cleanups: Array<() => void> = [];
-
-    const io = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      io.disconnect();
-      if (label) cleanups.push(runTextReveal(label));
-      if (img)   cleanups.push(runPixelReveal(img));
-    }, { threshold: 0.1 });
-
-    io.observe(row);
-    return () => { io.disconnect(); cleanups.forEach(fn => fn()); };
-  }, []);
+  useMorph(labelRef, prepareText);
+  useMorph(imgRef, (el) => prepare(el));
 
   const isEven = index % 2 === 0;
 
@@ -377,7 +324,7 @@ function HobbyRow({ hobby, index }: { hobby: typeof HOBBIES[number]; index: numb
   );
 
   return (
-    <div ref={rowRef} className="flex flex-col md:flex-row md:h-[40vh]">
+    <div className="flex flex-col md:flex-row md:h-[40vh]">
       {isEven ? <>{labelCell}{imageCell}</> : <>{imageCell}{labelCell}</>}
     </div>
   );
@@ -385,12 +332,17 @@ function HobbyRow({ hobby, index }: { hobby: typeof HOBBIES[number]; index: numb
 
 // ─── Section ─────────────────────────────────────────────────────────────────
 export default function Hobbies() {
-  const ref = useReveal<HTMLElement>();
+  const titleRef = useRef<HTMLDivElement>(null);
+
+  // Title uses the same PRCanvas morph as the rows — no DotMatrixText animate,
+  // no CSS reveal transition, no per-frame full-canvas repaint.
+  useMorph(titleRef, prepareText, 0.2);
 
   return (
-    <section id="hobbies" ref={ref} className="reveal py-20" aria-label="More About Me">
-      <div className="px-8 md:px-16 mb-14">
-        <DotMatrixText text="hobbies and interests" dotSize={7} color="#ffffff" className="mb-10" animate />
+    <section id="hobbies" className="py-20" aria-label="More About Me">
+      <div ref={titleRef} className="relative px-8 md:px-16 mb-14">
+        <DotMatrixText text="hobbies and interests" dotSize={7} color="#ffffff" className="mb-10" />
+        <PRCanvas />
       </div>
       <div>
         {HOBBIES.map((hobby, i) => (

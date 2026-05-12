@@ -1,5 +1,5 @@
 "use client";
-import { useReveal } from "@/hooks/useReveal";
+import { useEffect, useRef } from "react";
 import DotMatrixText from "./DotMatrixText";
 
 const LINKS = [
@@ -37,16 +37,39 @@ const LINKS = [
 ];
 
 export default function Contact() {
-  const ref = useReveal<HTMLElement>();
+  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+
+  useEffect(() => {
+    const els = linkRefs.current.filter(Boolean) as HTMLAnchorElement[];
+    if (!els.length) return;
+
+    const observers = els.map((el, i) => {
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+          io.disconnect();
+          el.style.transitionDelay = `${i * 180}ms`;
+          el.classList.add("belt-visible");
+        },
+        { threshold: 0.05 },
+      );
+      io.observe(el);
+      return io;
+    });
+
+    return () => observers.forEach(io => io.disconnect());
+  }, []);
+
   return (
-    <section id="contact" ref={ref} className="reveal px-8 md:px-16 py-20 pb-32" aria-label="Contact">
+    <section id="contact" className="px-8 md:px-16 py-20 pb-32" aria-label="Contact">
       <DotMatrixText text="contact" dotSize={7} color="#ffffff" className="mb-10" animate />
       <div className="flex items-start justify-evenly w-full gap-8">
-        {LINKS.map(l => (
+        {LINKS.map((l, i) => (
           <a
             key={l.label}
+            ref={el => { linkRefs.current[i] = el; }}
             href={l.href}
-            className="flex flex-col items-center gap-3 text-[#555555] hover:text-[#00ffa8] transition-colors duration-150 flex-1"
+            className="belt-row flex flex-col items-center gap-3 text-[#555555] hover:text-[#00ffa8] transition-colors duration-150 flex-1"
           >
             {l.icon}
             <span style={{ fontSize: "var(--fs-small)", fontFamily: "var(--font-pixel)" }} className="text-center break-all">
