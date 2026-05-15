@@ -118,24 +118,34 @@ export default function KeyboardShortcuts() {
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
-    const go = (id: string) =>
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    const go = (id: string) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    const CTRL_MAP: Record<string, string> = {
+      h: "hero", p: "projects", t: "stack", c: "contact",
+      b: "about", e: "experience", a: "hobbies",
+    };
 
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       const k = e.key.toLowerCase();
 
+      if (e.ctrlKey && CTRL_MAP[k]) {
+        e.preventDefault();
+        go(CTRL_MAP[k]);
+        return;
+      }
+
       if (k === "?") { setLegendOpen(v => !v); return; }
 
       if (pendingG) {
         clearTimeout(timer);
         setPendingG(false);
-        const map: Record<string, string> = {
-          h: "hero", b: "about", e: "experience",
-          p: "projects", t: "stack", a: "hobbies", c: "contact",
-        };
-        if (map[k]) go(map[k]);
+        if (CTRL_MAP[k]) go(CTRL_MAP[k]);
         return;
       }
       if (k === "g") {

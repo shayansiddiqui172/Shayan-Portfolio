@@ -4,7 +4,7 @@ import DotMatrixText from "./DotMatrixText";
 
 const HOBBIES: Array<{ label: string; image: "car" | "book" | "music" | "outdoors" | null }> = [
   { label: "cars",     image: "car"      },
-  { label: "books",    image: "book"     },
+  { label: "reading",  image: "book"     },
   { label: "music",    image: "music"    },
   { label: "outdoors", image: "outdoors" },
 ];
@@ -179,20 +179,23 @@ function CarAsciiCell() {
 }
 
 function CacaIframeCell({
-  src, title, align = "top", grayscale = false, zoom = 1,
+  src, title, align = "top", grayscale = false, zoom = 1, yOffset = 0,
 }: {
   src: string; title: string;
   align?: "top" | "center" | "bottom";
   grayscale?: boolean;
   zoom?: number;
+  yOffset?: number;
 }) {
-  const wrapRef  = useRef<HTMLDivElement>(null);
-  const frameRef = useRef<HTMLIFrameElement>(null);
-  const dimsRef  = useRef({ w: 1, h: 1 });
-  const alignRef = useRef(align);
-  const zoomRef  = useRef(zoom);
-  alignRef.current = align;
-  zoomRef.current  = zoom;
+  const wrapRef    = useRef<HTMLDivElement>(null);
+  const frameRef   = useRef<HTMLIFrameElement>(null);
+  const dimsRef    = useRef({ w: 1, h: 1 });
+  const alignRef   = useRef(align);
+  const zoomRef    = useRef(zoom);
+  const yOffsetRef = useRef(yOffset);
+  alignRef.current   = align;
+  zoomRef.current    = zoom;
+  yOffsetRef.current = yOffset;
 
   useEffect(() => {
     const wrap  = wrapRef.current;
@@ -206,6 +209,7 @@ function CacaIframeCell({
       let   ty      = 0;
       if (alignRef.current === "bottom") ty = wrap.clientHeight - h * scale;
       else if (alignRef.current === "center") ty = (wrap.clientHeight - h * scale) / 2;
+      ty += yOffsetRef.current * h * scale;
       frame.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
     };
 
@@ -317,8 +321,8 @@ function HobbyRow({ hobby, index }: { hobby: typeof HOBBIES[number]; index: numb
     >
       {hobby.image === "car"      && <CarAsciiCell />}
       {hobby.image === "book"     && <BookImageCell />}
-      {hobby.image === "music"    && <CacaIframeCell src="/vinyl.html"    title="vinyl record player" align="center" grayscale />}
-      {hobby.image === "outdoors" && <CacaIframeCell src="/outdoors.html" title="outdoors"            align="bottom" grayscale />}
+      {hobby.image === "music"    && <CacaIframeCell src="/music8.html"   title="music"               align="center" grayscale />}
+      {hobby.image === "outdoors" && <CacaIframeCell src="/outdoors.html" title="outdoors"            align="bottom" grayscale yOffset={0.12} />}
       <PRCanvas />
     </div>
   );
