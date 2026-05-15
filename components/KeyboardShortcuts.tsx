@@ -64,8 +64,8 @@ function useScramble(text: string, active: boolean, delay: number) {
 }
 
 /* ── Entry with scramble ── */
-function ScrambleEntry({ k, label, href, onClick, active, delay }: {
-  k: string; label: string; href: string | null; onClick?: () => void;
+function ScrambleEntry({ k, label, href, active, delay }: {
+  k: string; label: string; href: string | null;
   active: boolean; delay: number;
 }) {
   const keyText   = useScramble(k, active, delay);
@@ -94,7 +94,6 @@ function ScrambleEntry({ k, label, href, onClick, active, delay }: {
 
   return (
     <button
-      onClick={onClick}
       style={{ color: "inherit", background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", letterSpacing: "inherit", textAlign: "left" }}
     >
       {inner}
