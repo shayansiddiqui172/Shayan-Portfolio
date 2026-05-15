@@ -18,7 +18,7 @@ export default function Home() {
         <Experience />
         <Projects />
         <Stack />
-        <Hobbies />
+        {/* <Hobbies /> */}
         <Contact />
       </main>
       <KeyboardShortcuts />

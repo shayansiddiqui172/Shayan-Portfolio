@@ -5,14 +5,12 @@ const ROW1 = [
   { key: "^H", label: "HOME",         href: "#hero"       },
   { key: "^P", label: "PROJECTS",     href: "#projects"   },
   { key: "^T", label: "TECH",         href: "#stack"      },
-  { key: "^C", label: "CONTACT",      href: "#contact"    },
 ];
 
 const ROW2 = [
   { key: "^B", label: "BIO",          href: "#about"      },
   { key: "^E", label: "EXPERIENCE",   href: "#experience" },
-  { key: "^A", label: "ABOUT",        href: "#hobbies"    },
-  { key: "^?", label: "HELP",         href: null          },
+  { key: "^C", label: "CONTACT",      href: "#contact"    },
 ];
 
 const NOISE = ["+", ",", ".", "=", "/", "c", "x", "X", "p", "#", "%", "&"];
@@ -105,7 +103,6 @@ function ScrambleEntry({ k, label, href, onClick, active, delay }: {
 }
 
 export default function KeyboardShortcuts() {
-  const [legendOpen, setLegendOpen] = useState(false);
   const [pendingG, setPendingG]     = useState(false);
   const [animActive, setAnimActive] = useState(false);
 
@@ -125,8 +122,8 @@ export default function KeyboardShortcuts() {
     };
 
     const CTRL_MAP: Record<string, string> = {
-      h: "hero", p: "projects", t: "stack", c: "contact",
-      b: "about", e: "experience", a: "hobbies",
+      h: "hero", p: "projects", t: "stack",
+      b: "about", e: "experience", c: "contact",
     };
 
     const onKey = (e: KeyboardEvent) => {
@@ -139,8 +136,6 @@ export default function KeyboardShortcuts() {
         go(CTRL_MAP[k]);
         return;
       }
-
-      if (k === "?") { setLegendOpen(v => !v); return; }
 
       if (pendingG) {
         clearTimeout(timer);
@@ -174,7 +169,7 @@ export default function KeyboardShortcuts() {
           lineHeight: "1.4",
           color: "#fff",
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(3, 1fr)",
           padding: "0 2rem 0.4rem 2rem",
           opacity: animActive ? 1 : 0,
           transform: animActive ? "translateY(0)" : "translateY(8px)",
@@ -191,42 +186,9 @@ export default function KeyboardShortcuts() {
           <ScrambleEntry
             key={key} k={key} label={label} href={href}
             active={animActive} delay={i * 80 + 40}
-            onClick={href === null ? () => setLegendOpen(v => !v) : undefined}
           />
         ))}
       </nav>
-
-      {legendOpen && (
-        <div
-          className="hidden md:block"
-          style={{
-            position: "fixed",
-            bottom: "80px",
-            left: "2rem",
-            zIndex: 50,
-            fontFamily: "var(--font-pixel)",
-            fontSize: "clamp(20px, 1.6vw, 28px)",
-            lineHeight: "1.5",
-            color: "#fff",
-          }}
-        >
-          {[
-            ["g+h", "HOME"],
-            ["g+b", "BIO"],
-            ["g+e", "EXPERIENCE"],
-            ["g+p", "PROJECTS"],
-            ["g+t", "TECHNOLOGIES"],
-            ["g+a", "ABOUT"],
-            ["g+c", "CONTACT"],
-            ["?",   "TOGGLE HELP"],
-          ].map(([k, action]) => (
-            <div key={k} style={{ display: "flex", gap: "0.6em" }}>
-              <span style={{ minWidth: "3.5ch" }}>{k}</span>
-              <span>{action}</span>
-            </div>
-          ))}
-        </div>
-      )}
     </>
   );
 }
