@@ -78,7 +78,7 @@ export default function Contact() {
           </a>
         ))}
       </div>
-      <p style={{ fontSize: "var(--fs-meta)" }} className="text-[#1a1a1a] mt-24">
+      <p suppressHydrationWarning style={{ fontSize: "var(--fs-meta)" }} className="text-[#1a1a1a] mt-24">
         © {new Date().getFullYear()} Shayan Siddiqui
       </p>
     </section>
