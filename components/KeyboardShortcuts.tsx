@@ -8,7 +8,7 @@ const ROW1 = [
 ];
 
 const ROW2 = [
-  { key: "^B", label: "BIO",          href: "#about"      },
+  { key: "^A", label: "ABOUT",         href: "#about"      },
   { key: "^E", label: "EXPERIENCE",   href: "#experience" },
   { key: "^C", label: "CONTACT",      href: "#contact"    },
 ];
@@ -122,7 +122,7 @@ export default function KeyboardShortcuts() {
 
     const CTRL_MAP: Record<string, string> = {
       h: "hero", p: "projects", t: "stack",
-      b: "about", e: "experience", c: "contact",
+      a: "about", e: "experience", c: "contact",
     };
 
     const onKey = (e: KeyboardEvent) => {

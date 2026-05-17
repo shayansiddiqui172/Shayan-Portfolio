@@ -326,7 +326,7 @@ export default function Experience() {
   }, []);
 
   return (
-    <section id="experience" ref={ref} className="reveal px-8 md:px-16 py-20" aria-label="Experience">
+    <section id="experience" ref={ref} className="reveal px-8 md:px-16 py-20" style={{ paddingTop: "calc(5rem + 30px)" }} aria-label="Experience">
       <style>{`
         ${entryCSS}
         ${entranceCSS}

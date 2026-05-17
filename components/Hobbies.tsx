@@ -144,7 +144,7 @@ function useMorph(
 
 // ─── Image cells ─────────────────────────────────────────────────────────────
 
-function CarAsciiCell() {
+export function CarAsciiCell() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const preRef  = useRef<HTMLPreElement>(null);
 
@@ -178,7 +178,7 @@ function CarAsciiCell() {
   );
 }
 
-function CacaIframeCell({
+export function CacaIframeCell({
   src, title, align = "top", grayscale = false, zoom = 1, yOffset = 0,
 }: {
   src: string; title: string;
@@ -256,7 +256,7 @@ function CacaIframeCell({
   );
 }
 
-function BookImageCell() {
+export function BookImageCell() {
   const wrapRef  = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
 

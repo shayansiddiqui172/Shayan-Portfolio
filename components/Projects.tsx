@@ -17,7 +17,7 @@ const PROJECTS = [
     name: "Tab Organizer",
     year: "2026",
     subtitle: "FEATURED BY GOOGLE",
-    note: "400+ installs",
+    note: "600+ installs",
     desc: "Chrome extension featured by Google on the Chrome Web Store. Custom classification algorithm auto-groups 100+ tabs with 95%+ accuracy. Session persistence and crash recovery via chrome.storage API.",
     tech: ["JavaScript", "Chrome APIs"],
     url: "tabitorganizer.live",

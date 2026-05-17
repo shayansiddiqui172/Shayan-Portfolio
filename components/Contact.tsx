@@ -61,7 +61,7 @@ export default function Contact() {
   }, []);
 
   return (
-    <section id="contact" className="px-8 md:px-16 py-20 pb-32" aria-label="Contact">
+    <section id="contact" className="relative px-8 md:px-16 py-20 pb-32" style={{ paddingTop: "calc(5rem + 10px)" }} aria-label="Contact">
       <DotMatrixText text="contact" dotSize={7} color="#ffffff" className="mb-10" animate />
       <div className="flex items-start justify-evenly w-full gap-8">
         {LINKS.map((l, i) => (
@@ -78,7 +78,7 @@ export default function Contact() {
           </a>
         ))}
       </div>
-      <p suppressHydrationWarning style={{ fontSize: "var(--fs-meta)" }} className="text-[#1a1a1a] mt-24">
+      <p suppressHydrationWarning style={{ fontSize: "var(--fs-meta)", position: "absolute", bottom: "1.5rem", left: 0, right: 0, textAlign: "center" }} className="text-[#1a1a1a]">
         © {new Date().getFullYear()} Shayan Siddiqui
       </p>
     </section>
