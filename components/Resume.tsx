@@ -55,7 +55,7 @@ export default function Resume() {
         >
           <span style={{ color: "#00ff88", userSelect: "none" }}>{">"}</span>
           {" VIEW FULL RESUME ↗"}
-          <span className="term-cursor" aria-hidden>█</span>
+          <span className="term-cursor" aria-hidden>┃</span>
         </a>
 
         {/* PDF preview — desktop only.
