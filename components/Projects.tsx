@@ -21,6 +21,7 @@ const PROJECTS = [
     desc: "Chrome extension featured by Google on the Chrome Web Store. Custom classification algorithm auto-groups 100+ tabs with 95%+ accuracy. Session persistence and crash recovery via chrome.storage API.",
     tech: ["JavaScript", "Chrome APIs"],
     url: "tabitorganizer.live",
+    screenshot: "/projects/tabphoto.png",
   },
   {
     name: "Content Engine",

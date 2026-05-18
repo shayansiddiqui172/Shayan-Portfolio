@@ -2,15 +2,15 @@
 import { useEffect, useState, useRef } from "react";
 
 const ROW1 = [
-  { key: "^H", label: "HOME",         href: "#hero"       },
-  { key: "^P", label: "PROJECTS",     href: "#projects"   },
-  { key: "^T", label: "TECH",         href: "#stack"      },
+  { key: "^A", label: "ABOUT",       href: "#about"      },
+  { key: "^E", label: "EXPERIENCE",  href: "#experience" },
+  { key: "^P", label: "PROJECTS",    href: "#projects"   },
 ];
 
 const ROW2 = [
-  { key: "^A", label: "ABOUT",         href: "#about"      },
-  { key: "^E", label: "EXPERIENCE",   href: "#experience" },
-  { key: "^C", label: "CONTACT",      href: "#contact"    },
+  { key: "^T", label: "TECH",        href: "#stack"      },
+  { key: "^R", label: "RESUME",      href: "#resume"     },
+  { key: "^C", label: "CONTACT",     href: "#contact"    },
 ];
 
 const NOISE = ["+", ",", ".", "=", "/", "c", "x", "X", "p", "#", "%", "&"];
@@ -121,7 +121,7 @@ export default function KeyboardShortcuts() {
     };
 
     const CTRL_MAP: Record<string, string> = {
-      h: "hero", p: "projects", t: "stack",
+      r: "resume", p: "projects", t: "stack",
       a: "about", e: "experience", c: "contact",
     };
 
