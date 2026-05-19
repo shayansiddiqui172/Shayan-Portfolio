@@ -85,7 +85,7 @@ export default function About() {
       <div style={{ position: "relative", zIndex: 2, mixBlendMode: "difference" }}>
         <DotMatrixText text="about me" dotSize={7} color="#ffffff" className="mb-10" animate />
         <p style={{ fontSize: "calc(var(--fs-body) * 0.88)", fontFamily: "var(--font-receipt)", color: "#ffffff" }} className="leading-relaxed max-w-5xl">
-          <MorphText delay={250}>{"I'm a software engineering student at Wilfrid Laurier University, graduating May 2027. I build and ship full stack applications with a focus on systems thinking and clean execution. Currently interning as a Software Engineer at Wealth Capital Connections. I spend a lot of time behind a keyboard, but I value being outdoors just as much — sports, cars, and reading are where I spend the rest of it."}</MorphText>
+          <MorphText>{"I'm a software engineering student at Wilfrid Laurier University, graduating May 2027. I build and ship full stack applications with a focus on systems thinking and clean execution. Currently interning as a Software Engineer at Wealth Capital Connections. I spend a lot of time behind a keyboard, but I value being outdoors just as much — sports, cars, and reading are where I spend the rest of it."}</MorphText>
         </p>
       </div>
     </section>

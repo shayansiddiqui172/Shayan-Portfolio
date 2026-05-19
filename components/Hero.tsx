@@ -458,10 +458,7 @@ export default function Hero() {
               <p style={{ color: "#aaaaaa", fontSize: "1.05rem", letterSpacing: "0.06em" }}>
                 use{" "}
                 <span style={{ color: "#00ff88", background: "#0a1f10", border: "1px solid #00ff8840", padding: "0.1em 0.4em" }}>^</span>
-                {" "}commands to navigate{" "}
-                <span style={{ color: "#555" }}>·</span>{" "}
-                <span style={{ color: "#00ff88", background: "#0a1f10", border: "1px solid #00ff8840", padding: "0.1em 0.4em" }}>^?</span>
-                {" "}for help
+                {" "}commands to navigate
               </p>
             </div>
 

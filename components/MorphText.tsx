@@ -48,7 +48,7 @@ export default function MorphText({
           if (target[i] === " ") return;
           // Random fraction [0.04, 0.92] × duration, plus base delay
           const rt = 0.04 + Math.random() * 0.88;
-          const ms = 350 + delay + Math.round(rt * duration);
+          const ms = delay + Math.round(rt * duration);
           timers.push(setTimeout(() => { s.style.opacity = "1"; }, ms));
         });
         timersRef.current = timers;
