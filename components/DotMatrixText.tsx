@@ -98,11 +98,6 @@ export function gridCols(text: string, gs: GlyphSet): number {
   return text.length * (gs.gw + gs.gap) - gs.gap;
 }
 
-/** Convenience wrapper using the standard 5×9 set */
-export function dotGridCols(text: string): number {
-  return gridCols(text, STANDARD);
-}
-
 /* ─── Generic renderers ──────────────────────────────────────────────────── */
 export function renderDots(
   ctx: CanvasRenderingContext2D,

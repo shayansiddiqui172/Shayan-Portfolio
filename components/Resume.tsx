@@ -90,6 +90,7 @@ export default function Resume() {
               width: "116%",
               height: 1460,
               border: "none",
+              willChange: "transform",
             }}
             title="Resume preview"
           />
