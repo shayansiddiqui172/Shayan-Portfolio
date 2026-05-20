@@ -55,6 +55,42 @@ All rAF loops in the codebase have proper cleanup:
 All three fonts loaded via `next/font/google` in `app/layout.tsx` with `display: "swap"` — Rule H satisfied.
 Fonts: `Share_Tech_Mono` (body), `VT323` (pixel/display), `JetBrains_Mono` (canvas glyphs in hero).
 
+## Hobbies component status (as of 2026-05-15)
+
+`Hobbies` is imported at the top of `app/page.tsx` but commented out in JSX (`{/* <Hobbies /> */}`). The import is still live, so the module is compiled and bundled. This is safe — `Hobbies.tsx` is `"use client"`, has no import-time browser API calls, and builds without error. The `vinyl.html` file exists in `/public/` even though no active component references it. The iframe srcs `music8.html`, `outdoors.html`, `bookimage.html`, and `banner2.txt` are all in `/public/`.
+
+## Public assets inventory (as of 2026-05-19)
+
+All referenced public assets exist:
+- `/public/projects/` — cartsniper.png, tabphoto.png, contentengine.png, privatecloud.png, statline.png (all five used in Projects.tsx)
+- `/public/fonts/FakeReceipt.otf` — referenced in globals.css @font-face
+- `/public/banner2.txt` — fetched by `CarAsciiCell` in Hobbies.tsx
+- `/public/music8.html`, `/public/outdoors.html`, `/public/bookimage.html` — iframe srcs in Hobbies.tsx
+- `/public/vinyl.html` — present but not referenced by any active component
+- Logo images: `logo-avis.png`, `logo-habitat.jpg`, `updatedlogo.png` — used in Experience.tsx
+
+Tab Organizer now has `screenshot: "/projects/tabphoto.png"`. `tabphoto.png` exists in `/public/projects/`. `PreviewFrame` renders for all five projects.
+
+## Raw img tag in Projects.tsx
+
+`PreviewFrame` uses a raw `<img>` tag (with `// eslint-disable-next-line @next/next/no-img-element`). This is intentional — it renders screenshot previews dynamically from string srcs in a hover animation context. Not eligible for next/image `fill` without architectural change. Flagged as WARNING (no optimization), not BLOCKER.
+
+## Resume component (as of 2026-05-19)
+
+`components/Resume.tsx` is a `"use client"` component. Uses an inline `<style>` tag inside JSX (no SSR issue — React renders this client-side). Contains:
+- `@keyframes pdf-scroll`: animates `transform: translateY()` on `.pdf-scroll-frame` — correct GPU-composited property. No `will-change` on the iframe — this is a WARNING (Rule D/B).
+- `@keyframes term-blink`: animates `opacity` on `.term-cursor` — correct, GPU-composited.
+- `.term-resume-link:hover` transitions `opacity` — correct.
+- The iframe is desktop-only (`hidden md:block`).
+
+## MorphText delay change (as of 2026-05-19)
+
+`About.tsx` calls `<MorphText>` with no `delay` prop (default `delay=0`). Previously had a delay value. The `MorphText` component fires immediately on IntersectionObserver trigger at `threshold: 0.4`. No rAF loop — uses `setTimeout` only. All timers are cleaned up in useEffect return.
+
+## Contact.tsx hydration risk
+
+`Contact.tsx` renders `{new Date().getFullYear()}` inside a `"use client"` component with no `suppressHydrationWarning` on the containing `<p>`. In 2026 this is safe as the year matches between SSR and client render. This becomes a BLOCKER at year rollover (Dec 31 midnight UTC → Jan 1 client). Should have `suppressHydrationWarning` on the `<p>` for long-term safety.
+
 ## next.config.ts state (as of 2026-04-13)
 
 ```ts

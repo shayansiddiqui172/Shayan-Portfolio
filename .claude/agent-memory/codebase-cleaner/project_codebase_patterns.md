@@ -12,7 +12,7 @@ These symbols are exported but never imported by any other file. They remain bec
 - `DOT_FILL` — fill ratio constant used only internally
 - `GLYPH` — the 5×9 glyph record, only referenced to construct `STANDARD`
 - `STANDARD` — the standard GlyphSet, used internally by `renderDots`, `renderSegmented`, and the component
-- `dotGridCols(text)` — convenience wrapper around `gridCols(text, STANDARD)`; never called outside this file
+- ~~`dotGridCols(text)`~~ — **Removed 2026-05-19**: convenience wrapper around `gridCols(text, STANDARD)`; never called inside or outside this file
 - `renderDots` — exported and used internally only
 
 **Removed in 2026-05-09 cleanup pass:**
@@ -47,8 +47,22 @@ These symbols are exported but never imported by any other file. They remain bec
 
 `useRowReveal` and `useSpaceExit` are internal-only hooks (not exported). Both are called from `HobbyRow`. Do not confuse with unused exports.
 
+## KeyboardShortcuts.tsx — onClick prop history
+
+`ScrambleEntry` had an `onClick?: () => void` prop that wired to a `<button>` branch (reached when `href === null`). The button branch itself exists to support a null-href mode and should remain. The `onClick` prop was removed in the 2026-05-15 cleanup pass — it was never passed by any call site (the "help button" that used it was removed previously).
+
+All six `ScrambleEntry` usages pass only `k`, `label`, `href`, `active`, and `delay`. The `href` type remains `string | null` to keep the button branch structurally intact.
+
 ## No commented-out code or console statements
 
-Confirmed zero `console.*` calls and zero commented-out code blocks across all source files as of 2026-05-09.
+Confirmed zero `console.*` calls and zero commented-out code blocks across all source files as of 2026-05-18. `{/* <Hobbies /> */}` in `app/page.tsx` is an intentional hold — but the `import Hobbies` line was removed in the 2026-05-18 pass because it was provably unused (component is commented out). If Hobbies is restored, the import must be re-added.
 
-**How to apply:** On future cleanup runs, focus on `DotMatrixText.tsx` first (most export surface). Skip Hero animation constants entirely.
+## Resume.tsx — untracked, not yet imported
+
+`Resume.tsx` exists as an untracked file but is not imported anywhere in the project (not in `page.tsx`, not in any other component). Flagged for human review — may be work-in-progress.
+
+## About.tsx — intentional dead branches in AboutBackground
+
+`BG_STYLE` is hardcoded as `const BG_STYLE: 1 | 2 | 3 = 1`. The `if (BG_STYLE === 2)` block and the final `BG_STYLE === 3` return are unreachable at runtime but kept intentionally as a design-mode selector. Do not remove these branches — they are documented with comments describing each style.
+
+**How to apply:** On future cleanup runs, focus on `DotMatrixText.tsx` first (most export surface). Skip Hero animation constants entirely. Skip `BG_STYLE` branches in About.tsx.
