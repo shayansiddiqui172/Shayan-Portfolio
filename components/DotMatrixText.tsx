@@ -225,11 +225,11 @@ export default function DotMatrixText({
     const resize = (): boolean => {
       const upper = text.toUpperCase();
       const cols  = gridCols(upper, gs);
+      const containerW = wrap.clientWidth;
       let step: number;
       if (dotSize) {
-        step = dotSize;
+        step = containerW > 0 ? Math.min(dotSize, containerW / cols) : dotSize;
       } else {
-        const containerW = wrap.clientWidth;
         if (containerW === 0) return false;
         step = containerW / cols;
       }

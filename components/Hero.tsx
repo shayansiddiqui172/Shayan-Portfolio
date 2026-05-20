@@ -315,7 +315,6 @@ function HeroAnimation({
       onDoneRef.current();
     }
     window.addEventListener("keydown", skip, { once: true });
-    window.addEventListener("click", skip, { once: true });
 
     document.fonts.ready.then(() => {
       rafId = requestAnimationFrame(frame);
@@ -325,7 +324,6 @@ function HeroAnimation({
       skipped = true;
       cancelAnimationFrame(rafId);
       window.removeEventListener("keydown", skip);
-      window.removeEventListener("click", skip);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -361,10 +359,7 @@ export default function Hero() {
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const mobile =
-      window.matchMedia("(pointer: coarse)").matches ||
-      window.innerWidth < 640;
-    if (mobile || reducedMotion) {
+    if (reducedMotion) {
       setSkipAnim(true);
       setAnimDone(true);
       window.dispatchEvent(new Event("hero-anim-done"));
@@ -427,7 +422,7 @@ export default function Hero() {
 
             {/* Typewriter role — main heading */}
             <div style={fadeIn(0)}>
-              <p style={{ color: "#00ff88", fontSize: "1.6rem", lineHeight: 1.5, minWidth: "21ch" }}>
+              <p style={{ color: "#00ff88", fontSize: "clamp(1.6rem, 6vw, 1.6rem)", lineHeight: 1.5 }}>
                 {displayed}
                 <span className="blink" style={{ color: "#00ff88" }}>▌</span>
               </p>
@@ -435,7 +430,7 @@ export default function Hero() {
 
             {/* bio */}
             <div style={{ ...fadeIn(0.2), marginTop: "0.25rem" }}>
-              <p style={{ color: "#999999", fontSize: "1.3rem" }}>
+              <p style={{ color: "#999999", fontSize: "clamp(1.3rem, 5vw, 1.3rem)" }}>
                 building across the stack. from systems to polished web experiences.
               </p>
             </div>
@@ -443,18 +438,18 @@ export default function Hero() {
             {/* info block */}
             <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
               <div style={fadeIn(0.4)}>
-                <p style={{ color: "#777777", fontSize: "1.1rem" }}>software eng intern @ wealth capital connections</p>
+                <p style={{ color: "#777777", fontSize: "clamp(1.1rem, 4vw, 1.1rem)" }}>software eng intern @ wealth capital connections</p>
               </div>
               <div style={fadeIn(0.6)}>
-                <p style={{ color: "#777777", fontSize: "1.1rem" }}>cs @ wilfrid laurier university</p>
+                <p style={{ color: "#777777", fontSize: "clamp(1.1rem, 4vw, 1.1rem)" }}>cs @ wilfrid laurier university</p>
               </div>
               <div style={fadeIn(0.8)}>
-                <p style={{ color: "#777777", fontSize: "1.1rem" }}>toronto, ontario</p>
+                <p style={{ color: "#777777", fontSize: "clamp(1.1rem, 4vw, 1.1rem)" }}>toronto, ontario</p>
               </div>
             </div>
 
             {/* keyboard nav hint */}
-            <div style={{ ...fadeIn(1.1), marginTop: "1.25rem" }}>
+            <div className="hidden md:block" style={{ ...fadeIn(1.1), marginTop: "1.25rem" }}>
               <p style={{ color: "#aaaaaa", fontSize: "1.05rem", letterSpacing: "0.06em" }}>
                 use{" "}
                 <span style={{ color: "#00ff88", background: "#0a1f10", border: "1px solid #00ff8840", padding: "0.1em 0.4em" }}>^</span>

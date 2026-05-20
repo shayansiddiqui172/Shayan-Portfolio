@@ -29,6 +29,7 @@ function AboutBackground() {
       {/* Outdoors — bottom right, fades toward center */}
       <div
         aria-hidden
+        className="about-outdoors-pos"
         style={{
           position: "absolute", bottom: 0, right: 0,
           width: "45%", height: "55%",
@@ -82,9 +83,9 @@ export default function About() {
   return (
     <section id="about" ref={ref} className="reveal relative overflow-hidden px-8 md:px-16 py-20" aria-label="About">
       <AboutBackground />
-      <div style={{ position: "relative", zIndex: 2, mixBlendMode: "difference" }}>
+      <div style={{ position: "relative", zIndex: 2, mixBlendMode: "difference" }} className="mt-[50px] md:mt-0">
         <DotMatrixText text="about me" dotSize={7} color="#ffffff" className="mb-10" animate />
-        <p style={{ fontSize: "calc(var(--fs-body) * 0.88)", fontFamily: "var(--font-receipt)", color: "#ffffff" }} className="leading-relaxed max-w-5xl">
+        <p style={{ fontSize: "max(1.3rem, calc(var(--fs-body) * 0.88))", fontFamily: "var(--font-receipt)", color: "#ffffff" }} className="leading-relaxed max-w-5xl">
           <MorphText>{"I'm a software engineering student at Wilfrid Laurier University, graduating May 2027. I build and ship full stack applications with a focus on systems thinking and clean execution. Currently interning as a Software Engineer at Wealth Capital Connections. I spend a lot of time behind a keyboard, but I value being outdoors just as much — sports, cars, and reading are where I spend the rest of it."}</MorphText>
         </p>
       </div>

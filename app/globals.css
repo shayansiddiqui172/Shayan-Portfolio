@@ -22,7 +22,7 @@
 }
 
 /* ── Base ── */
-html { scroll-behavior: smooth; background: #0a0a0a; }
+html { scroll-behavior: smooth; background: #0a0a0a; overflow-x: hidden; }
 
 body {
   background: #0a0a0a;
@@ -101,6 +101,11 @@ body {
 
 /* ── Timeline ── */
 .tl-line { position: absolute; left: 0; top: 6px; bottom: 0; width: 1px; background: #1a1a1a; }
+
+/* ── About outdoors image — mobile offset ── */
+@media (max-width: 767px) {
+  .about-outdoors-pos { bottom: 20.1% !important; }
+}
 
 /* ── Hide cursor on touch ── */
 @media (pointer: coarse) {

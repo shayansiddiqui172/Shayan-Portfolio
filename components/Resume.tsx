@@ -46,7 +46,7 @@ export default function Resume() {
           style={{
             display: "inline-block",
             fontFamily: "var(--font-mono)",
-            fontSize: "var(--fs-small)",
+            fontSize: "clamp(1.1rem, 4vw, var(--fs-small))",
             color: "#ffffff",
             textDecoration: "none",
             letterSpacing: "0.05em",
@@ -57,6 +57,38 @@ export default function Resume() {
           {" VIEW FULL RESUME ↗"}
           <span className="term-cursor" aria-hidden>┃</span>
         </a>
+
+        {/* Resume image preview — mobile only */}
+        <div
+          className="block md:hidden"
+          style={{
+            position: "relative",
+            height: 480,
+            overflow: "hidden",
+            border: "1px solid #1a1a1a",
+          }}
+        >
+          <div style={{
+            position: "absolute",
+            bottom: 0, left: 0, right: 0,
+            height: 72,
+            background: "linear-gradient(to bottom, transparent, #0a0a0a)",
+            zIndex: 2,
+            pointerEvents: "none",
+          }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/resume-preview.png"
+            alt="Resume preview"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              display: "block",
+            }}
+          />
+        </div>
 
         {/* PDF preview — desktop only.
             Container clips to 720px tall. Iframe is 1320px tall so the animation

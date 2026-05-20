@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useReveal } from "@/hooks/useReveal";
 import DotMatrixText from "./DotMatrixText";
 
@@ -87,12 +87,12 @@ function PreviewFrame({ src }: { src: string }) {
   );
 }
 
-function ProjectPreview({ src, show }: { src: string; show: boolean }) {
+function ProjectPreview({ src, show, width = 720, slide = 260, right = -60 }: { src: string; show: boolean; width?: number; slide?: number; right?: number }) {
   const NUM     = 7;       // 1 main + 6 ghosts stacked behind
   const OFF_X   = 7;
   const OFF_Y   = 4;
   const STAGGER = 45;
-  const SLIDE   = 260;     // px offset when hidden (slid off right)
+  const SLIDE   = slide;    // px offset when hidden (slid off right)
   const DUR     = 700;
   const EASE    = "cubic-bezier(0.16, 1, 0.3, 1)";
 
@@ -101,10 +101,10 @@ function ProjectPreview({ src, show }: { src: string; show: boolean }) {
       aria-hidden
       style={{
         position: "absolute",
-        right: -60,
+        right,
         top: "50%",
         transform: "translateY(-50%)",
-        width: 720,
+        width,
         pointerEvents: "none",
         zIndex: 0,
       }}
@@ -142,36 +142,41 @@ function ProjectPreview({ src, show }: { src: string; show: boolean }) {
   );
 }
 
-function ProjectRow({ p, isActive, typedCount, allGreen, onEnter, onLeave }: {
+function ProjectRow({ p, index, isActive, typedCount, allGreen, onEnter, onLeave }: {
   p: Project;
+  index: number;
   isActive: boolean;
   typedCount: number;
   allGreen: boolean;
   onEnter: () => void;
   onLeave: () => void;
 }) {
+  const screenshot = "screenshot" in p ? (p as typeof p & { screenshot?: string }).screenshot : undefined;
   return (
     <div
       className="relative"
+      data-project-row={index}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      {"screenshot" in p && (p as typeof p & { screenshot?: string }).screenshot && (
-        <div className="hidden md:block">
-          <ProjectPreview
-            src={(p as typeof p & { screenshot: string }).screenshot}
-            show={isActive}
-          />
-        </div>
+      {screenshot && (
+        <>
+          <div className="hidden md:block">
+            <ProjectPreview src={screenshot} show={isActive} />
+          </div>
+          <div className="md:hidden">
+            <ProjectPreview src={screenshot} show={isActive} width={200} slide={150} right={-16} />
+          </div>
+        </>
       )}
       <a
         href={p.url.startsWith("http") ? p.url : `https://${p.url}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="relative block py-11"
+        className="relative block py-6 md:py-11"
         style={{ zIndex: 1 }}
       >
-        <div className="grid grid-cols-[0.7fr_1.4fr_auto] gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-[0.7fr_1.4fr_auto] gap-4 md:gap-6 items-start">
           {/* LEFT — project name column */}
           <div className="min-w-0">
             <div className="mb-4">
@@ -265,7 +270,7 @@ function ProjectRow({ p, isActive, typedCount, allGreen, onEnter, onLeave }: {
           </div>
 
           {/* RIGHT — visit site */}
-          <div className="self-center whitespace-nowrap">
+          <div className="self-center whitespace-nowrap hidden md:block">
             <span style={{ fontSize: "var(--fs-small)", color: "#ffffff", fontFamily: "var(--font-receipt)" }}>
               VISIT SITE →
             </span>
@@ -284,6 +289,7 @@ export default function Projects() {
   const timersRef     = useRef<ReturnType<typeof setTimeout>[]>([]);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef       = useRef<HTMLDivElement>(null);
+  const activeRef     = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -308,12 +314,13 @@ export default function Projects() {
     return () => observer.disconnect();
   }, []);
 
-  function startAnimation(index: number) {
+  const startAnimation = useCallback((index: number) => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setTypedCount(0);
     setAllGreen(false);
     setActiveProject(index);
+    activeRef.current = index;
     const name = PROJECTS[index].name;
     name.split("").forEach((_, i) => {
       const t = setTimeout(() => {
@@ -322,16 +329,57 @@ export default function Projects() {
       }, (i + 1) * 40);
       timersRef.current.push(t);
     });
-  }
+  }, []);
 
-  function stopAnimation() {
+  const stopAnimation = useCallback(() => {
     if (hoverTimerRef.current) { clearTimeout(hoverTimerRef.current); hoverTimerRef.current = null; }
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setTypedCount(0);
     setAllGreen(false);
     setActiveProject(null);
-  }
+    activeRef.current = null;
+  }, []);
+
+  // Mobile only: when a project sits at the viewport center for >0.75s, trigger
+  // the same active state desktop uses on hover (slides the small preview in).
+  useEffect(() => {
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
+    const list = listRef.current;
+    if (!list) return;
+    const rows = list.querySelectorAll<HTMLElement>("[data-project-row]");
+    if (!rows.length) return;
+
+    let dwellTimer: ReturnType<typeof setTimeout> | null = null;
+    let pendingIdx: number | null = null;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const idx = Number(entry.target.getAttribute("data-project-row"));
+          if (entry.isIntersecting) {
+            pendingIdx = idx;
+            if (dwellTimer) clearTimeout(dwellTimer);
+            dwellTimer = setTimeout(() => {
+              if (pendingIdx === idx) startAnimation(idx);
+            }, 250);
+          } else {
+            if (pendingIdx === idx) {
+              if (dwellTimer) { clearTimeout(dwellTimer); dwellTimer = null; }
+              pendingIdx = null;
+            }
+            if (activeRef.current === idx) stopAnimation();
+          }
+        });
+      },
+      { rootMargin: "-50% 0px -50% 0px", threshold: 0 }
+    );
+    rows.forEach((row) => observer.observe(row));
+    return () => {
+      observer.disconnect();
+      if (dwellTimer) clearTimeout(dwellTimer);
+    };
+  }, [startAnimation, stopAnimation]);
 
   return (
     <section
@@ -352,6 +400,7 @@ export default function Projects() {
           <ProjectRow
             key={i}
             p={p}
+            index={i}
             isActive={activeProject === i}
             typedCount={activeProject === i ? typedCount : 0}
             allGreen={activeProject === i ? allGreen : false}

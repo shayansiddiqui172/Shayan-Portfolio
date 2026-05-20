@@ -125,9 +125,18 @@ const entranceCSS = `
     will-change: transform;
   }
   [data-exp-crossbar].exp-in { transform: scaleX(1); }
+
+  /* Mobile center line */
+  [data-exp-line-m] {
+    transform-origin: top center;
+    transform: scaleY(0);
+    will-change: transform;
+    transition: transform 800ms ease-out;
+  }
+  [data-exp-line-m].exp-in { transform: scaleY(1); }
 `;
 
-function LogoBox({ src, className }: { src: string | null; className?: string }) {
+function LogoBox({ src, className, style: styleOverride }: { src: string | null; className?: string; style?: React.CSSProperties }) {
   return (
     <div className={className} style={{
       width: 56, height: 56, flexShrink: 0,
@@ -136,12 +145,46 @@ function LogoBox({ src, className }: { src: string | null; className?: string })
       overflow: "hidden",
       position: "relative",
       transition: "box-shadow 0.6s ease-out",
+      ...styleOverride,
     }}>
       {src ? (
         <Image src={src} alt="company logo" fill style={{ objectFit: "cover" }} />
       ) : (
         <span style={{ fontSize: 9, color: "#444", fontFamily: "var(--font-mono)" }}>logo</span>
       )}
+    </div>
+  );
+}
+
+function MobileCard({ e, i, mobileRight }: { e: Entry; i: number; mobileRight: boolean }) {
+  return (
+    <div
+      className={`experience-entry-${i}`}
+      data-exp-card=""
+      {...(mobileRight ? { "data-exp-right": "" } : { "data-exp-left": "" })}
+      style={{ zIndex: 5 }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 6 }}>
+        <LogoBox src={e.logo} className="experience-logo" style={{ width: 32, height: 32 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="experience-role" style={{
+            fontSize: "1.05rem", color: "#ffffff",
+            fontFamily: "var(--font-pixel)", lineHeight: 1.25,
+          }}>{e.role}</div>
+          <div style={{
+            fontSize: "0.9rem", color: "#aaaaaa",
+            fontFamily: "var(--font-pixel)", lineHeight: 1.25,
+          }}>{e.org}</div>
+        </div>
+      </div>
+      <div style={{ fontSize: "0.75rem", color: "#555555", fontFamily: "var(--font-pixel)", marginBottom: 5 }}>
+        {e.date}
+      </div>
+      <p style={{
+        fontSize: "0.8rem", color: "#777777",
+        fontFamily: "var(--font-pixel)", lineHeight: 1.5,
+        margin: 0, wordBreak: "break-word",
+      }}>{e.bullet}</p>
     </div>
   );
 }
@@ -304,18 +347,23 @@ export default function Experience() {
         // Heading — immediate
         el.querySelector("[data-exp-heading]")?.classList.add("exp-in");
 
-        // Center line — slight delay so heading leads
+        // Center lines — slight delay so heading leads
         setTimeout(() => {
           el.querySelector("[data-exp-line]")?.classList.add("exp-in");
+          el.querySelector("[data-exp-line-m]")?.classList.add("exp-in");
         }, 150);
 
-        // Cards — 200ms stagger starting at 200ms
-        el.querySelectorAll("[data-exp-card]").forEach((card, i) => {
+        // Cards — only visible ones (skips whichever layout is hidden)
+        const visibleCards = Array.from(el.querySelectorAll("[data-exp-card]"))
+          .filter(c => (c as HTMLElement).offsetParent !== null);
+        visibleCards.forEach((card, i) => {
           setTimeout(() => card.classList.add("exp-in"), 200 + i * 200);
         });
 
-        // Crossbars — 300ms after their card
-        el.querySelectorAll("[data-exp-crossbar]").forEach((bar, i) => {
+        // Crossbars — only visible ones, 300ms after their card
+        const visibleBars = Array.from(el.querySelectorAll("[data-exp-crossbar]"))
+          .filter(b => (b as HTMLElement).offsetParent !== null);
+        visibleBars.forEach((bar, i) => {
           setTimeout(() => bar.classList.add("exp-in"), 500 + i * 200);
         });
       },
@@ -389,23 +437,46 @@ export default function Experience() {
 
         </div>
 
-        {/* ── Mobile fallback ── */}
-        <div className="relative pl-8 flex flex-col gap-10 max-w-2xl md:hidden">
-          <div className="tl-line" />
-          {ENTRIES.map((e, i) => (
-            <div key={i} className="relative">
-              <div style={{
-                position: "absolute", left: -4, top: 6,
-                width: 8, height: 8, background: "#ffffff",
-              }} />
-              <div className="flex flex-col gap-1">
-                <span style={{ fontSize: "1.1rem", color: "#ffffff", fontFamily: "var(--font-mono)" }}>{e.role}</span>
-                <span style={{ fontSize: "0.95rem", color: "#aaaaaa", fontFamily: "var(--font-mono)" }}>{e.org}</span>
-                <span style={{ fontSize: "0.75rem", color: "#555555", fontFamily: "var(--font-mono)" }}>{e.date}</span>
-                <p style={{ fontSize: "0.85rem", color: "#777", fontFamily: "var(--font-pixel)", lineHeight: 1.6, marginTop: 4 }}>{e.bullet}</p>
+        {/* ── Mobile zigzag timeline ── */}
+        <div className="relative md:hidden" style={{ paddingTop: 16 }}>
+          {/* Center line */}
+          <div
+            className="experience-line"
+            data-exp-line-m=""
+            style={{
+              position: "absolute",
+              left: "calc(50% - 1px)",
+              top: 0, bottom: 0,
+              width: 2,
+              background: "#222222",
+              zIndex: 1,
+            }}
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+            {ENTRIES.map((e, i) => {
+              const mobileRight = i % 2 !== 0;
+              return (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start" }}>
+                {/* Left slot */}
+                <div style={{ flex: "0 0 calc(50% - 10px)", paddingRight: 4, zIndex: 5 }}>
+                  {!mobileRight && <MobileCard e={e} i={i} mobileRight={false} />}
+                </div>
+                {/* Crossbar */}
+                <div style={{ flex: "0 0 20px", paddingTop: 8, zIndex: 4 }}>
+                  <div
+                    className="experience-crossbar"
+                    data-exp-crossbar=""
+                    style={{ width: 20, height: 10, background: "#ffffff" }}
+                  />
+                </div>
+                {/* Right slot */}
+                <div style={{ flex: "0 0 calc(50% - 10px)", paddingLeft: 4, zIndex: 5 }}>
+                  {mobileRight && <MobileCard e={e} i={i} mobileRight={true} />}
+                </div>
               </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
 
       </div>

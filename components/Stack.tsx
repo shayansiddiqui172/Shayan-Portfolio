@@ -82,19 +82,18 @@ function BeltRow({ cat, staggerDelay }: { cat: typeof CATEGORIES[number]; stagge
   }, [staggerDelay]);
 
   return (
-    <div ref={rowRef} className="flex items-center gap-12 belt-row">
+    <div ref={rowRef} className="flex flex-col md:flex-row md:items-center gap-3 md:gap-12 belt-row">
       <span
-        className="font-mono text-[#666666] text-right shrink-0"
-        style={{ fontSize: "1.75rem", width: "190px", fontFamily: "var(--font-receipt)" }}
+        className="font-mono text-[#666666] shrink-0 md:text-right md:w-[190px]"
+        style={{ fontSize: "1.75rem", fontFamily: "var(--font-receipt)" }}
       >
         {cat.label}
       </span>
       <div
-        className="relative overflow-hidden shrink-0"
+        className="relative overflow-hidden shrink-0 w-full md:w-[900px]"
         style={{
-          width: "900px",
-          maskImage: "linear-gradient(to right, transparent 0px, black 110px, black 790px, transparent 900px)",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0px, black 110px, black 790px, transparent 900px)",
+          maskImage: "linear-gradient(to right, transparent 0px, black 12%, black 88%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0px, black 12%, black 88%, transparent 100%)",
         }}
       >
         <Belt items={cat.items} speed={cat.speed} />
@@ -107,7 +106,7 @@ export default function Stack() {
   return (
     <section id="stack" className="px-8 md:px-16 py-20" aria-label="Technologies">
       <DotMatrixText text="technologies" dotSize={7} color="#ffffff" className="mb-16" animate />
-      <div className="flex flex-col gap-7 mx-auto pt-20 pb-8" style={{ width: "fit-content" }}>
+      <div className="flex flex-col gap-7 mx-auto pt-20 pb-8 w-full md:w-fit">
         {CATEGORIES.map((cat, i) => (
           <BeltRow key={cat.label} cat={cat} staggerDelay={i * 180} />
         ))}
