@@ -107,6 +107,11 @@ body {
   .about-outdoors-pos { bottom: 20.1% !important; }
 }
 
+/* ── About car ASCII — wider + higher on mobile so it's actually visible ── */
+@media (max-width: 767px) {
+  .about-car-bg { width: 90% !important; top: 80px !important; }
+}
+
 /* ── Hide cursor on touch ── */
 @media (pointer: coarse) {
   body { cursor: auto; }

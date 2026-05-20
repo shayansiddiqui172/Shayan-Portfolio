@@ -158,7 +158,9 @@ export function CarAsciiCell() {
     const wrap = wrapRef.current;
     const pre  = preRef.current;
     if (!wrap || !pre) return;
-    const update = () => { pre.style.fontSize = `${wrap.clientWidth / 400 / 0.601}px`; };
+    // Clamp to a minimum effective container width so font stays visible on narrow mobile
+    // screens (a 390px phone would otherwise produce ~0.97px — sub-pixel, invisible).
+    const update = () => { pre.style.fontSize = `${Math.max(wrap.clientWidth, 600) / 400 / 0.601}px`; };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(wrap);

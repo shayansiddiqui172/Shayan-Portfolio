@@ -80,7 +80,8 @@ function HeroAnimation({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    // Cap DPR at 2 — beyond that the canvas is huge and gains nothing visually on mobile.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = window.innerWidth;
     const H = window.innerHeight;
     canvas.width = Math.round(W * dpr);
@@ -163,7 +164,8 @@ function HeroAnimation({
     /* ── Animation state ── */
     let rafId = 0;
     let lastShimmer = 0;
-    let startTs = 0;
+    let accumulated = 0;
+    let prevTs = 0;
     let skipped = false;
     let allSlottedAt = -1;
 
@@ -194,8 +196,11 @@ function HeroAnimation({
 
     function frame(ts: number) {
       if (skipped) return;
-      if (!startTs) startTs = ts;
-      const elapsed = ts - startTs;
+      // Cap per-frame delta to 100ms so backgrounding the tab can't cause
+      // the animation to race through all phases in a single frame.
+      accumulated += prevTs > 0 ? Math.min(ts - prevTs, 100) : 0;
+      prevTs = ts;
+      const elapsed = accumulated;
 
       if (ts - lastShimmer >= SHIMMER_INTERVAL) {
         shimmer();
@@ -315,15 +320,16 @@ function HeroAnimation({
       onDoneRef.current();
     }
     window.addEventListener("keydown", skip, { once: true });
+    // Allow tapping to skip on mobile (no physical keyboard available).
+    window.addEventListener("touchstart", skip, { once: true, passive: true });
 
-    document.fonts.ready.then(() => {
-      rafId = requestAnimationFrame(frame);
-    });
+    rafId = requestAnimationFrame(frame);
 
     return () => {
       skipped = true;
       cancelAnimationFrame(rafId);
       window.removeEventListener("keydown", skip);
+      window.removeEventListener("touchstart", skip);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -343,7 +349,6 @@ function HeroAnimation({
 export default function Hero() {
   const [animDone, setAnimDone]   = useState(false);
   const [canvasGone, setCanvasGone] = useState(false);
-  const [skipAnim, setSkipAnim]   = useState(false);
 
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
@@ -357,14 +362,8 @@ export default function Hero() {
     });
   }, []);
 
-  useEffect(() => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedMotion) {
-      setSkipAnim(true);
-      setAnimDone(true);
-      window.dispatchEvent(new Event("hero-anim-done"));
-    }
-  }, []);
+  // Reduced-motion check intentionally omitted for mobile compatibility —
+  // many phones have this set by default and it was silently skipping the animation.
 
   /* ── Typewriter ── */
   const [displayed, setDisplayed] = useState("");
@@ -399,7 +398,7 @@ export default function Hero() {
     <section id="hero" className="min-h-screen flex flex-col" aria-label="Hero">
 
       {/* ── Canvas overlay (Phase 0 + Phase 1) ── */}
-      {!canvasGone && !skipAnim && (
+      {!canvasGone && (
         <div ref={canvasWrapperRef} style={{ position: "fixed", inset: 0, zIndex: 50 }}>
           <HeroAnimation onDone={onDone} headingRef={headingRef} />
         </div>

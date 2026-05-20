@@ -16,6 +16,7 @@ function AboutBackground() {
       {/* Car ASCII — left side, top aligned with paragraph, fades toward center */}
       <div
         aria-hidden
+        className="about-car-bg"
         style={{
           position: "absolute", top: "196px", left: 0, bottom: 0,
           width: "60%",
