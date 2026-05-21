@@ -148,10 +148,25 @@ export function CarAsciiCell() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const preRef  = useRef<HTMLPreElement>(null);
 
+  // Defer the 46KB banner fetch + 115-line <pre> layout until the cell nears the
+  // viewport. Loading it on mount competes with the hero intro animation for the
+  // main thread and stalls the first frames on mobile.
   useEffect(() => {
-    fetch("/banner2.txt").then(r => r.text()).then(text => {
-      if (preRef.current) preRef.current.textContent = text;
-    });
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    let loaded = false;
+    const load = () => {
+      if (loaded) return;
+      loaded = true;
+      fetch("/banner2.txt").then(r => r.text()).then(text => {
+        if (preRef.current) preRef.current.textContent = text;
+      });
+    };
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { load(); io.disconnect(); }
+    }, { rootMargin: "600px 0px" });
+    io.observe(wrap);
+    return () => io.disconnect();
   }, []);
 
   useEffect(() => {

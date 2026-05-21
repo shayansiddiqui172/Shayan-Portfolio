@@ -106,6 +106,50 @@ function HeroAnimation({
     const grid: string[] = new Array(noiseRows * noiseCols);
     for (let i = 0; i < grid.length; i++) grid[i] = randChar();
 
+    /* ── Offscreen noise cache ──────────────────────────────────────────────
+       Re-running ~1800 fillText calls every frame tanks mobile frame rate.
+       Render the noise to an offscreen layer only when the grid (shimmer) or
+       tint color actually changes, then blit that single image each frame. */
+    const makeLayer = () => {
+      const c = document.createElement("canvas");
+      c.width = Math.round(W * dpr);
+      c.height = Math.round(H * dpr);
+      const lcx = c.getContext("2d")!;
+      lcx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { c, cx: lcx };
+    };
+    const white  = makeLayer();  // white glyphs, rebuilt on shimmer
+    const tinted = makeLayer();  // white glyphs recolored to the current noise color
+    let gridDirty = true;        // white layer needs a rebuild
+    let tintColor = "";          // color currently baked into `tinted`
+
+    function rebuildWhiteNoise() {
+      white.cx.clearRect(0, 0, W, H);
+      white.cx.fillStyle = "#fff";
+      white.cx.font = FONT_STR;
+      for (let r = 0; r < noiseRows; r++) {
+        const y = r * LINE_H + FONT_SIZE;
+        const rowOff = r * noiseCols;
+        for (let c = 0; c < noiseCols; c++) {
+          white.cx.fillText(grid[rowOff + c], c * CHAR_W, y);
+        }
+      }
+      gridDirty = false;
+    }
+
+    function ensureTinted(color: string) {
+      if (!gridDirty && color === tintColor) return;
+      if (gridDirty) rebuildWhiteNoise();
+      tinted.cx.globalCompositeOperation = "source-over";
+      tinted.cx.clearRect(0, 0, W, H);
+      tinted.cx.drawImage(white.c, 0, 0, W, H);
+      tinted.cx.globalCompositeOperation = "source-in";
+      tinted.cx.fillStyle = color;
+      tinted.cx.fillRect(0, 0, W, H);
+      tinted.cx.globalCompositeOperation = "source-over";
+      tintColor = color;
+    }
+
     /* ── Render a single glyph at given center & height ── */
     function renderSingleChar(char: string, cx: number, cy: number, h: number, color: string) {
       if (h <= 0) return;
@@ -173,17 +217,10 @@ function HeroAnimation({
       ctx!.fillStyle = bgCol;
       ctx!.fillRect(0, 0, W, H);
       if (noiseAlpha <= 0) return;
+      ensureTinted(noiseCol);
       ctx!.save();
       ctx!.globalAlpha = noiseAlpha;
-      ctx!.fillStyle = noiseCol;
-      ctx!.font = FONT_STR;
-      for (let r = 0; r < noiseRows; r++) {
-        const y = r * LINE_H + FONT_SIZE;
-        const rowOff = r * noiseCols;
-        for (let c = 0; c < noiseCols; c++) {
-          ctx!.fillText(grid[rowOff + c], c * CHAR_W, y);
-        }
-      }
+      ctx!.drawImage(tinted.c, 0, 0, W, H);
       ctx!.restore();
     }
 
@@ -192,6 +229,7 @@ function HeroAnimation({
       for (let i = 0; i < count; i++) {
         grid[Math.floor(Math.random() * grid.length)] = randChar();
       }
+      gridDirty = true;
     }
 
     function frame(ts: number) {
