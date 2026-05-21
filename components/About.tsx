@@ -39,7 +39,19 @@ function AboutBackground() {
           maskImage:        "linear-gradient(to right, transparent, black 55%)",
         }}
       >
-        <CacaIframeCell src="/outdoors.html" title="outdoors" align="bottom" grayscale yOffset={0.12} />
+        {/* Desktop keeps the live iframe render; mobile uses a pre-rendered image
+            with object-fit:contain — iOS Safari mis-sizes iframes, which clipped
+            the outdoors art to its top-left corner. */}
+        <div className="about-outdoors-frame absolute inset-0">
+          <CacaIframeCell src="/outdoors.html" title="outdoors" align="bottom" grayscale yOffset={0.12} />
+        </div>
+        <img
+          src="/outdoors.png"
+          alt=""
+          aria-hidden
+          className="about-outdoors-img"
+          style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", filter: "grayscale(1)", display: "none" }}
+        />
       </div>
     </>
   );

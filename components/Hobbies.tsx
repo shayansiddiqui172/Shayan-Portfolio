@@ -241,6 +241,11 @@ export function CacaIframeCell({
       frame.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
     };
 
+    // Keep the largest content size ever seen. The first measurement on `load` can
+    // be premature (heavy libcaca content not laid out yet) and report a too-small
+    // size — which would size the iframe small, clip its content to the top-left,
+    // and scale that crop to fill the box (the "upper-left quarter" bug).
+    let maxW = 0, maxH = 0;
     const measure = () => {
       try {
         const doc = frame.contentDocument;
@@ -249,25 +254,38 @@ export function CacaIframeCell({
         doc.body.style.background = "#0a0a0a";
         const d = doc.body.querySelector("div");
         if (d) (d as HTMLElement).style.background = "#0a0a0a";
-        const w = doc.documentElement.scrollWidth || doc.body.scrollWidth;
-        const h = doc.documentElement.scrollHeight || doc.body.scrollHeight;
-        if (w > 0) {
-          dimsRef.current = { w, h };
-          frame.style.width  = `${w}px`;
-          frame.style.height = `${h}px`;
+        const w = Math.max(doc.documentElement.scrollWidth, doc.body.scrollWidth);
+        const h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
+        if (w > maxW) maxW = w;
+        if (h > maxH) maxH = h;
+        if (maxW > 1) {
+          dimsRef.current = { w: maxW, h: maxH };
+          frame.style.width  = `${maxW}px`;
+          frame.style.height = `${maxH}px`;
         }
       } catch {}
       update();
     };
 
-    frame.addEventListener("load", measure);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const onLoad = () => {
+      measure();
+      // Re-measure as the content finishes laying out so we converge on the real size.
+      [120, 400, 1000, 2500].forEach((t) => timers.push(setTimeout(measure, t)));
+    };
+    frame.addEventListener("load", onLoad);
     const io = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) { frame.src = src; io.disconnect(); }
     }, { rootMargin: "800px 0px" });
     io.observe(wrap);
     const ro = new ResizeObserver(update);
     ro.observe(wrap);
-    return () => { ro.disconnect(); io.disconnect(); frame.removeEventListener("load", measure); };
+    return () => {
+      ro.disconnect();
+      io.disconnect();
+      frame.removeEventListener("load", onLoad);
+      timers.forEach(clearTimeout);
+    };
   }, [src]);
 
   return (

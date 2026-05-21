@@ -366,8 +366,6 @@ function HeroAnimation({
       onDoneRef.current();
     }
     window.addEventListener("keydown", skip, { once: true });
-    // Allow tapping to skip on mobile (no physical keyboard available).
-    window.addEventListener("touchstart", skip, { once: true, passive: true });
 
     rafId = requestAnimationFrame(frame);
 
@@ -375,7 +373,6 @@ function HeroAnimation({
       skipped = true;
       cancelAnimationFrame(rafId);
       window.removeEventListener("keydown", skip);
-      window.removeEventListener("touchstart", skip);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

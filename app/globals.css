@@ -102,7 +102,7 @@ body {
 /* ── Timeline ── */
 .tl-line { position: absolute; left: 0; top: 6px; bottom: 0; width: 1px; background: #1a1a1a; }
 
-/* ── About outdoors image — mobile: small box, whole photo fits inside (contain) ── */
+/* ── About outdoors image — mobile: small box, pre-rendered image contained ── */
 @media (max-width: 767px) {
   .about-outdoors-pos {
     width: 58% !important;
@@ -112,6 +112,8 @@ body {
     -webkit-mask-image: linear-gradient(to right, transparent 0, black 16%) !important;
     mask-image: linear-gradient(to right, transparent 0, black 16%) !important;
   }
+  .about-outdoors-frame { display: none !important; } /* iframe is iOS-unreliable */
+  .about-outdoors-img   { display: block !important; }
 }
 
 /* ── About car ASCII — sized + positioned for mobile so it's visible but subtle ── */
