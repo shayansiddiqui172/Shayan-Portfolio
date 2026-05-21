@@ -102,16 +102,15 @@ body {
 /* ── Timeline ── */
 .tl-line { position: absolute; left: 0; top: 6px; bottom: 0; width: 1px; background: #1a1a1a; }
 
-/* ── About outdoors image — mobile: wide landscape box matching the image aspect
-   (~1.28) so the whole photo fills it, with a lighter left fade so it's visible ── */
+/* ── About outdoors image — mobile: small box, whole photo fits inside (contain) ── */
 @media (max-width: 767px) {
   .about-outdoors-pos {
-    width: 94% !important;
-    height: 30% !important;
-    bottom: 12% !important;
-    opacity: 0.7 !important;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, black 20%) !important;
-    mask-image: linear-gradient(to right, transparent 0, black 20%) !important;
+    width: 58% !important;
+    height: 22% !important;
+    bottom: 13% !important;
+    opacity: 0.6 !important;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 16%) !important;
+    mask-image: linear-gradient(to right, transparent 0, black 16%) !important;
   }
 }
 
