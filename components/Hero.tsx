@@ -80,10 +80,12 @@ function HeroAnimation({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Cap DPR at 2 — beyond that the canvas is huge and gains nothing visually on mobile.
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = window.innerWidth;
     const H = window.innerHeight;
+    // Cap DPR — beyond this the canvas is huge for no visual gain. Mobile gets a
+    // tighter cap since fill-rate (full-canvas ops every frame) is the constraint there.
+    const isMobile = W < 768;
+    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     canvas.style.width = `${W}px`;
@@ -118,28 +120,33 @@ function HeroAnimation({
       lcx.setTransform(dpr, 0, 0, dpr, 0, 0);
       return { c, cx: lcx };
     };
-    const white  = makeLayer();  // white glyphs, rebuilt on shimmer
+    const white  = makeLayer();  // white glyphs, patched incrementally on shimmer
     const tinted = makeLayer();  // white glyphs recolored to the current noise color
-    let gridDirty = true;        // white layer needs a rebuild
     let tintColor = "";          // color currently baked into `tinted`
 
-    function rebuildWhiteNoise() {
-      white.cx.clearRect(0, 0, W, H);
-      white.cx.fillStyle = "#fff";
+    // Only the cells that actually changed get repainted — shimmer touches ~8% of
+    // the grid, so redrawing all ~1800 glyphs every 90ms was a periodic hitch.
+    const dirtyIdx: number[] = [];
+    for (let i = 0; i < grid.length; i++) dirtyIdx.push(i);
+
+    function applyDirty() {
       white.cx.font = FONT_STR;
-      for (let r = 0; r < noiseRows; r++) {
-        const y = r * LINE_H + FONT_SIZE;
-        const rowOff = r * noiseCols;
-        for (let c = 0; c < noiseCols; c++) {
-          white.cx.fillText(grid[rowOff + c], c * CHAR_W, y);
-        }
+      white.cx.fillStyle = "#fff";
+      for (let i = 0; i < dirtyIdx.length; i++) {
+        const idx  = dirtyIdx[i];
+        const r    = (idx / noiseCols) | 0;
+        const c    = idx - r * noiseCols;
+        const x    = c * CHAR_W;
+        const yTop = r * LINE_H;
+        white.cx.clearRect(x, yTop, CHAR_W + 1, LINE_H + 1);
+        white.cx.fillText(grid[idx], x, yTop + FONT_SIZE);
       }
-      gridDirty = false;
+      dirtyIdx.length = 0;
     }
 
     function ensureTinted(color: string) {
-      if (!gridDirty && color === tintColor) return;
-      if (gridDirty) rebuildWhiteNoise();
+      if (dirtyIdx.length === 0 && color === tintColor) return;
+      if (dirtyIdx.length) applyDirty();
       tinted.cx.globalCompositeOperation = "source-over";
       tinted.cx.clearRect(0, 0, W, H);
       tinted.cx.drawImage(white.c, 0, 0, W, H);
@@ -227,9 +234,10 @@ function HeroAnimation({
     function shimmer() {
       const count = Math.ceil(grid.length * SHIMMER_RATIO);
       for (let i = 0; i < count; i++) {
-        grid[Math.floor(Math.random() * grid.length)] = randChar();
+        const idx = Math.floor(Math.random() * grid.length);
+        grid[idx] = randChar();
+        dirtyIdx.push(idx);
       }
-      gridDirty = true;
     }
 
     function frame(ts: number) {

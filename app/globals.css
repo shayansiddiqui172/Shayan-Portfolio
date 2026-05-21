@@ -109,7 +109,7 @@ body {
 
 /* ── About car ASCII — sized + positioned for mobile so it's visible but subtle ── */
 @media (max-width: 767px) {
-  .about-car-bg { width: 68% !important; top: 150px !important; }
+  .about-car-bg { width: 68% !important; top: 240px !important; }
 }
 
 /* ── Hide cursor on touch ── */

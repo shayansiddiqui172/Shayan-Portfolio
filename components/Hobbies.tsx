@@ -221,12 +221,22 @@ export function CacaIframeCell({
 
     const update = () => {
       const { w, h } = dimsRef.current;
-      const scale   = (wrap.clientWidth / w) * zoomRef.current;
-      const tx      = (wrap.clientWidth  - w * scale) / 2;
-      let   ty      = 0;
-      if (alignRef.current === "bottom") ty = wrap.clientHeight - h * scale;
-      else if (alignRef.current === "center") ty = (wrap.clientHeight - h * scale) / 2;
-      ty += yOffsetRef.current * h * scale;
+      // Default: fit to width. But if that makes the image taller than the box
+      // (narrow mobile), it would clip to a thin strip — fit to height and center
+      // instead so the whole image stays visible. Desktop, where it already fits,
+      // is unchanged.
+      const scaleW    = (wrap.clientWidth / w) * zoomRef.current;
+      const overflows = h * scaleW > wrap.clientHeight;
+      const scale     = overflows ? (wrap.clientHeight / h) * zoomRef.current : scaleW;
+      const tx        = (wrap.clientWidth - w * scale) / 2;
+      let   ty        = 0;
+      if (overflows) {
+        ty = (wrap.clientHeight - h * scale) / 2;
+      } else {
+        if (alignRef.current === "bottom") ty = wrap.clientHeight - h * scale;
+        else if (alignRef.current === "center") ty = (wrap.clientHeight - h * scale) / 2;
+        ty += yOffsetRef.current * h * scale;
+      }
       frame.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
     };
 

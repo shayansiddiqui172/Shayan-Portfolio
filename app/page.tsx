@@ -7,6 +7,7 @@ import Projects from "@/components/Projects";
 import Resume from "@/components/Resume";
 import Contact from "@/components/Contact";
 import KeyboardShortcuts from "@/components/KeyboardShortcuts";
+import DeferredSections from "@/components/DeferredSections";
 
 export default function Home() {
   return (
@@ -14,13 +15,15 @@ export default function Home() {
       <ScrollReset />
       <main>
         <Hero />
-        <About />
-        <Experience />
-        <Projects />
-        <Stack />
-        <Resume />
-        {/* <Hobbies /> */}
-        <Contact />
+        <DeferredSections>
+          <About />
+          <Experience />
+          <Projects />
+          <Stack />
+          <Resume />
+          {/* <Hobbies /> */}
+          <Contact />
+        </DeferredSections>
       </main>
       <KeyboardShortcuts />
     </>
