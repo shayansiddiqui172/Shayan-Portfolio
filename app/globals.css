@@ -102,9 +102,17 @@ body {
 /* ── Timeline ── */
 .tl-line { position: absolute; left: 0; top: 6px; bottom: 0; width: 1px; background: #1a1a1a; }
 
-/* ── About outdoors image — mobile offset ── */
+/* ── About outdoors image — mobile: wide landscape box matching the image aspect
+   (~1.28) so the whole photo fills it, with a lighter left fade so it's visible ── */
 @media (max-width: 767px) {
-  .about-outdoors-pos { bottom: 20.1% !important; }
+  .about-outdoors-pos {
+    width: 94% !important;
+    height: 30% !important;
+    bottom: 12% !important;
+    opacity: 0.7 !important;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 20%) !important;
+    mask-image: linear-gradient(to right, transparent 0, black 20%) !important;
+  }
 }
 
 /* ── About car ASCII — sized + positioned for mobile so it's visible but subtle ── */
