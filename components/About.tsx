@@ -50,7 +50,7 @@ function AboutBackground() {
           alt=""
           aria-hidden
           className="about-outdoors-img"
-          style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", filter: "grayscale(1)", display: "none" }}
+          style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", filter: "grayscale(1) brightness(0.5)", display: "none" }}
         />
       </div>
     </>
